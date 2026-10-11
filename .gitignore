@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+# Faturas reais e dados pessoais NUNCA entram no git.
+fixtures/private/
+*.pdf
+supabase/.branches/
+supabase/.temp/
