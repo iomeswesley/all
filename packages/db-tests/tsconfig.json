@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "noUncheckedIndexedAccess": false,
+    "allowJs": true
+  },
+  "include": [
+    "test",
+    "../../scripts/gen-seed-sql.mjs"
+  ]
+}
