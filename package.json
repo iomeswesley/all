@@ -9,6 +9,7 @@
     "functions:sync": "node scripts/sync-core-to-functions.mjs"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "2.45.4",
     "unpdf": "0.12.1"
   }
 }

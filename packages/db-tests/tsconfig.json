@@ -9,6 +9,8 @@
   },
   "include": [
     "test",
-    "../../scripts/gen-seed-sql.mjs"
+    "../../scripts/gen-seed-sql.mjs",
+    "../../supabase/functions/parse-statement/process.ts",
+    "../../supabase/functions/parse-statement/supabase-store.ts"
   ]
 }
