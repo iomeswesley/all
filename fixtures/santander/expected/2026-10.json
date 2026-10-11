@@ -1,0 +1,13 @@
+{
+  "totalDueCents": 655518,
+  "dueDate": "2026-10-06",
+  "closingDate": "2026-09-29",
+  "previousBalanceCents": 672972,
+  "domesticExpensesCents": 643648,
+  "foreignExpensesCents": 11870,
+  "foreignExpensesUsdCents": 2169,
+  "paymentsCents": 672972,
+  "creditsCents": 0,
+  "balanceCents": 655518,
+  "futureObligationsCents": 627015
+}
