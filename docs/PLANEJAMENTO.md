@@ -376,3 +376,10 @@ Cada commit mantém `pnpm test` verde. Ao fim da fase: lista de pendências e ri
 - **IR:** dedução sempre decidida pela pessoa; sugestões excluem farmácia/academia/livros; educação limitada por pessoa (configurável).
 - **Privacidade:** máscara global de valores (`lib/format.ts`) + redesenho por `usePrefs()`.
 - **View do painel recriada** na migration da fase 3 (`t.*` não acompanha colunas novas).
+
+## 16. Complementos — decisões
+
+- **Lançamento manual** usa a competência do **mês do pagamento**; fatura de cartão, o mês do vencimento (visão de caixa). O painel abre por padrão na fatura mais recente.
+- **View do painel** passou a `left join` (manuais não têm fatura); constraint garante que só `source = 'manual'` existe sem fatura.
+- **Notificação com botões**: três categorias fixas (limite do Android); ação silenciosa e idempotente.
+- **Contraste** tratado como requisito testado (AA 4,5:1), não como ajuste visual.

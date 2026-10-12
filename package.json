@@ -4,9 +4,10 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.28.0",
   "scripts": {
-    "test": "pnpm --filter @financas/core test && pnpm --filter @financas/db-tests test",
+    "test": "node scripts/check-contrast.mjs && pnpm --filter @financas/core test && pnpm --filter @financas/db-tests test",
     "typecheck": "pnpm -r --if-present typecheck",
-    "functions:sync": "node scripts/sync-core-to-functions.mjs"
+    "functions:sync": "node scripts/sync-core-to-functions.mjs",
+    "lint": "pnpm --filter @financas/mobile lint"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.117.3",

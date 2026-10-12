@@ -10,10 +10,10 @@ export default function ConviteLink() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!token) return setSaved(true);
+    if (!token) return;
     void AsyncStorage.setItem(PENDING_INVITE_KEY, String(token)).finally(() => setSaved(true));
   }, [token]);
 
-  if (!saved) return <Screen><Loading /></Screen>;
+  if (token && !saved) return <Screen><Loading /></Screen>;
   return <Redirect href="/" />;
 }

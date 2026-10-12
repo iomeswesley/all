@@ -3,7 +3,7 @@ import { Pressable, TextInput, View } from "react-native";
 import { detectRecurring, formatMonthLong, formatMonthShort, futureInstallmentTimeline, projectCashflow, tryParseBRL, type CashflowMonth } from "@financas/core";
 import { formatBRL, formatNumberBR } from "@/lib/format";
 import { Banner, Body, Button, Card, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { monthsOf, useAnalysis } from "@/lib/analysis";
+import { latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
 import { fetchSettings, saveSettings } from "@/lib/phase3";
 import { useReady } from "@/lib/session";
@@ -25,8 +25,7 @@ export default function Fluxo() {
   const projection = useMemo(() => {
     const data = analysis.data;
     if (!data) return null;
-    const months = monthsOf(data.txs);
-    const latest = months[months.length - 1];
+    const latest = latestStatementMonth(data);
     if (!latest) return null;
     const statement = data.statements.find((s) => s.status === "confirmed" && s.due_date.startsWith(latest));
     const recurring = detectRecurring(data.txs, latest);

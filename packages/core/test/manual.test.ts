@@ -71,3 +71,14 @@ describe("regras: casar e validar", () => {
     expect(MATCH_TYPE_LABEL.prefix).toBe("começa com");
   });
 });
+
+import { CATEGORIZE_ACTIONS, categoryFromAction } from "../src/notifications.ts";
+describe("botões da notificação", () => {
+  it("cada botão aponta para uma categoria válida e identificadores são únicos", () => {
+    expect(new Set(CATEGORIZE_ACTIONS.map((a) => a.identifier)).size).toBe(CATEGORIZE_ACTIONS.length);
+    expect(CATEGORIZE_ACTIONS.length).toBeLessThanOrEqual(3); // Android mostra até 3
+    expect(categoryFromAction("cat:2")).toBe(2);
+    expect(categoryFromAction("expo.modules.notifications.actions.DEFAULT")).toBeNull();
+    expect(categoryFromAction("cat:99")).toBeNull();
+  });
+});

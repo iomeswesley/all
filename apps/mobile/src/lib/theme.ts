@@ -13,6 +13,9 @@ export interface Theme {
   textMuted: string;
   primary: string;
   onPrimary: string;
+  /** fundo de botões/chips selecionados (texto branco por cima, contraste ≥ 4,5:1) */
+  primaryFill: string;
+  dangerFill: string;
   danger: string;
   warning: string;
   success: string;
@@ -28,11 +31,13 @@ const light: Theme = {
   border: "#e4e3de",
   text: "#0b0b0b",
   textSecondary: "#52514e",
-  textMuted: "#7b7a74",
-  primary: "#2a78d6",
+  textMuted: "#6b6a64",
+  primary: "#1c68c4",
   onPrimary: "#ffffff",
+  primaryFill: "#1c68c4",
+  dangerFill: "#c4302f",
   danger: "#c4302f",
-  warning: "#a86a00",
+  warning: "#8f5a00",
   success: "#12794f",
   series: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"],
   other: "#9a9992",
@@ -48,6 +53,8 @@ const dark: Theme = {
   textMuted: "#8f8e86",
   primary: "#3987e5",
   onPrimary: "#ffffff",
+  primaryFill: "#2468c7",
+  dangerFill: "#c4302f",
   danger: "#e66767",
   warning: "#e0a03a",
   success: "#3fbf8c",

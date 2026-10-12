@@ -105,9 +105,11 @@ export function MonthlyStackedBars({ series, selectedMonth, onSelect }: { series
   const idx = series.months.indexOf(shown);
   const maxCents = Math.max(...series.totals, 1);
 
+  const summary = series.months.map((m, i) => `${formatMonthShort(m)} ${formatBRL(series.totals[i] ?? 0)}`).join("; ");
   return (
     <View style={{ gap: space.sm }}>
       <Body style={{ fontWeight: "600" }}>{formatMonthShort(shown)}: {formatBRL(series.totals[idx] ?? 0)}</Body>
+      <View accessible accessibilityRole="image" accessibilityLabel={`Gráfico de barras dos últimos 12 meses por categoria. Totais: ${summary}`}>
       <BarChart
         stackData={stackData}
         barWidth={18}
@@ -128,6 +130,7 @@ export function MonthlyStackedBars({ series, selectedMonth, onSelect }: { series
         scrollToEnd
         disableScroll={false}
       />
+      </View>
     </View>
   );
 }

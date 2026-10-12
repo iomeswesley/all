@@ -3,7 +3,7 @@ import { Alert, Modal, TextInput, View } from "react-native";
 import { goalFeasibility, goalProgress, parseBrDate, tryParseBRL, formatBrDate, detectRecurring, futureInstallmentTimeline, projectCashflow } from "@financas/core";
 import { formatBRL } from "@/lib/format";
 import { Badge, Body, Button, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { monthsOf, useAnalysis } from "@/lib/analysis";
+import { latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
 import { createGoal, deleteGoal, fetchGoals, fetchSettings, setGoalSaved } from "@/lib/phase3";
 import { useReady } from "@/lib/session";
@@ -30,7 +30,7 @@ export default function Metas() {
     const d = analysis.data;
     const s = settings.data;
     if (!d || !s || s.monthlyIncomeCents === 0) return null;
-    const latest = monthsOf(d.txs).at(-1);
+    const latest = latestStatementMonth(d);
     if (!latest) return null;
     const rec = detectRecurring(d.txs, latest);
     const tl = futureInstallmentTimeline(d.txs.filter((x) => x.statementMonth === latest && x.kind === "parcela"), latest);

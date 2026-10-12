@@ -13,8 +13,8 @@
 ### Como as recomendações são calculadas (regras, não IA)
 duplicidade de assinatura (valor da cobrança extra) · orçamento estourado (o excesso) · categoria ≥20% e ≥R$ 50 acima da média dos 3 meses anteriores (o excesso) · juros/multa/mora (100% evitável) · IOF no exterior ≥ R$ 10 (teto) · anuidade cobrada · delivery iFood ≥ R$ 150 (estimativa: cortar 1 em cada 4). Itens “estimados” são marcados como tal.
 
-## Limite importante: alerta de orçamento é retroativo
-Sem Open Finance não existe gasto em tempo real: o orçamento é medido **na fatura**, e o alerta sai quando ela é confirmada (depois do fechamento). Para avisar durante o mês seria preciso um feed ao vivo ou lançamento manual diário. Diga se quiser que eu adicione um “lançamento rápido” para isso.
+## Limite importante: o cartão só chega depois do fechamento
+Sem Open Finance não existe gasto de cartão em tempo real: o alerta do cartão sai quando a **fatura é confirmada**. Para o que acontece durante o mês (Pix, dinheiro, débito, boleto) existe o **Lançar gasto** ([docs/COMPLEMENTOS.md](COMPLEMENTOS.md)), que reavalia o orçamento na hora.
 
 ## Publicar o que mudou
 ```bash
@@ -32,7 +32,7 @@ O **Expo Go não recebe push** no Android (desde o SDK 53). Para ter push de ver
 3. iPhone: exige conta **Apple Developer (US$ 99/ano)** para instalar um build próprio. Sem ela, no iPhone continue com Expo Go e os avisos dentro do app.
 4. Rode `npx expo start --dev-client`, abra o app, **Mais → Notificações → Ativar neste aparelho**.
 
-Categorizar direto pela notificação (botões na notificação) não foi feito: o toque abre a tela **Revisar**, que leva 1–2 toques.
+Categorizar pela notificação: o aviso de **lançamento manual** do seu par traz botões *Mercado / Restaurante / Transporte* (veja [docs/COMPLEMENTOS.md](COMPLEMENTOS.md)); os demais avisos abrem a tela **Revisar**.
 
 ## Testes da fase
 - Núcleo: orçamento (limiar em inteiros, herança entre meses, alertas únicos), encargos, check-in com as 7 faturas, mensagens de push, gasto pessoal oculto e conferência do par.

@@ -5,7 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatMonthLong, formatMonthShort, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, type Change } from "@financas/core";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { Badge, Body, Button, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { budgetsFor, useAnalysis } from "@/lib/analysis";
+import { budgetsFor, defaultMonth, useAnalysis } from "@/lib/analysis";
 import { usePrefs } from "@/lib/prefs";
 import { useReady } from "@/lib/session";
 import { space, useTheme } from "@/lib/theme";
@@ -23,7 +23,7 @@ export default function Inicio() {
   const view = useMemo(() => {
     if (!data || data.length === 0) return null;
     const months = [...new Set(data.map((x) => x.statementMonth))].sort();
-    const month = picked && months.includes(picked) ? picked : months[months.length - 1]!;
+    const month = picked && months.includes(picked) ? picked : (analysis ? defaultMonth(analysis, months) : undefined) ?? months[months.length - 1]!;
     const prev = addMonthsToKey(month, -1);
     const cur = data.filter((x) => x.statementMonth === month);
     const before = data.filter((x) => x.statementMonth === prev);
@@ -62,6 +62,7 @@ export default function Inicio() {
         <Card>
           <Empty title="Ainda sem faturas confirmadas" hint="Importe o PDF da fatura do cartão e confirme para ver o painel do mês." />
           <Button title="Importar fatura" onPress={() => router.push("/importar")} />
+          <Button title="Lançar gasto (Pix, dinheiro…)" variant="secondary" onPress={() => router.push("/lancar")} />
         </Card>
       ) : (
         <>
@@ -85,6 +86,8 @@ export default function Inicio() {
               </Body>
             ) : null}
           </Card>
+
+          <Button title="＋ Lançar gasto (Pix, dinheiro…)" variant="secondary" onPress={() => router.push("/lancar")} />
 
           {view.reviewCount > 0 ? (
             <Card>

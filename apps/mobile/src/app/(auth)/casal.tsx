@@ -24,7 +24,7 @@ export default function Casal() {
   const [name, setName] = useState("");
   const [casal, setCasal] = useState("Nossa casa");
   const [token, setToken] = useState("");
-  const [preview, setPreview] = useState<{ household: string; inviter: string; valid: boolean } | null>(null);
+  const [previewState, setPreviewState] = useState<{ token: string; household: string; inviter: string; valid: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,14 +35,15 @@ export default function Casal() {
   }, []);
 
   useEffect(() => {
-    setPreview(null);
     const tk = token.trim();
     if (tk.length < 32) return;
     void supabase.rpc("peek_invite", { p_token: tk }).then(({ data }) => {
       const row = Array.isArray(data) ? data[0] : null;
-      if (row) setPreview({ household: row.household_name, inviter: row.inviter_name, valid: row.valid });
+      if (row) setPreviewState({ token: tk, household: row.household_name, inviter: row.inviter_name, valid: row.valid });
     });
   }, [token]);
+  // só vale a prévia do código que está no campo agora
+  const preview = previewState && previewState.token === token.trim() ? previewState : null;
 
   async function create() {
     setBusy(true);

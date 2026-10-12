@@ -28,12 +28,13 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       .then((raw) => {
         if (!raw) return;
         const p = JSON.parse(raw) as Partial<Prefs>;
-        setPrefs({ theme: p.theme === "light" || p.theme === "dark" ? p.theme : "system", privacy: Boolean(p.privacy) });
+        const loaded: Prefs = { theme: p.theme === "light" || p.theme === "dark" ? p.theme : "system", privacy: Boolean(p.privacy) };
+        privacyOn = loaded.privacy;
+        setPrefs(loaded);
       })
       .catch(() => {});
   }, []);
 
-  privacyOn = prefs.privacy;
   useEffect(() => {
     // faz diálogos, teclado e Switch nativos seguirem a escolha
     Appearance.setColorScheme(prefs.theme === "system" ? "unspecified" : prefs.theme);

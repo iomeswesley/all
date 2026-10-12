@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Share, View } from "react-native";
 import { buildCheckin, categoryName, formatMonthLong, formatMonthShort, addMonthsToKey, statementMonthKey } from "@financas/core";
 import { Badge, Banner, Body, Button, Card, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { budgetsFor, monthsOf, useAnalysis } from "@/lib/analysis";
+import { budgetsFor, defaultMonth, monthsOf, useAnalysis } from "@/lib/analysis";
 import { space, useTheme } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
 
@@ -14,7 +14,7 @@ export default function Checkin() {
   const view = useMemo(() => {
     if (!data) return null;
     const months = monthsOf(data.txs);
-    const month = picked && months.includes(picked) ? picked : months[months.length - 1];
+    const month = picked && months.includes(picked) ? picked : defaultMonth(data, months);
     if (!month) return null;
     const st = data.statements.find((s) => s.status === "confirmed" && statementMonthKey(s.due_date) === month);
     const ci = buildCheckin({

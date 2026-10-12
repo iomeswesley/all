@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { View } from "react-native";
 import { categoryName, detectRecurring, formatMonthShort, type RecurringAlert } from "@financas/core";
 import { Badge, Body, Card, Empty, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { fetchConfirmedTransactions, useLoad } from "@/lib/data";
+import { latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { space } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
 
@@ -13,12 +13,14 @@ const ALERT: Record<RecurringAlert, { label: string; tone: "warn" | "bad" | "neu
 };
 
 export default function Recorrencias() {
-  const { data, error, loading, reload } = useLoad(fetchConfirmedTransactions);
+  const analysis = useAnalysis();
+  const { error, loading, reload } = analysis;
+  const data = analysis.data?.txs ?? null;
   const report = useMemo(() => {
     if (!data || data.length === 0) return null;
-    const latest = data.reduce((m, x) => (x.statementMonth > m ? x.statementMonth : m), "");
+    const latest = latestStatementMonth(analysis.data!) ?? "";
     return { latest, ...detectRecurring(data, latest) };
-  }, [data]);
+  }, [data, analysis.data]);
 
   if (loading && !data) return <Screen><Loading /></Screen>;
   return (

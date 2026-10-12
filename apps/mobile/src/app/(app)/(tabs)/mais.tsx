@@ -11,7 +11,7 @@ import { space, useTheme } from "@/lib/theme";
 
 type Path =
   | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encargos"
-  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao";
+  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras";
 
 export default function Mais() {
   const t = useTheme();
@@ -37,6 +37,12 @@ export default function Mais() {
     <Screen>
       <H1>Mais</H1>
 
+      <SectionTitle>Lançar</SectionTitle>
+      <Card style={{ paddingVertical: 4 }}>
+        {item("add-circle-outline", "Lançar gasto", "Pix, dinheiro, débito ou boleto na hora", "/lancar")}
+        {item("list-outline", "Pix e dinheiro", "Ver, corrigir e excluir os lançamentos manuais", "/lancamentos", true)}
+      </Card>
+
       <SectionTitle>Entender o gasto</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         {item("clipboard-outline", "Check-in do mês", "Resumo e recomendações com economia em R$/mês", "/checkin")}
@@ -58,6 +64,7 @@ export default function Mais() {
       <Card style={{ paddingVertical: 4 }}>
         {item("card-outline", "Monitor do cartão", "Melhor dia de compra, serviços em dólar e IOF", "/cartao")}
         {item("swap-horizontal-outline", "Cartões e donos", "De quem é cada cartão (meu / dela / nosso)", "/cartoes")}
+        {item("git-branch-outline", "Regras", "O que o app aprendeu com suas correções", "/regras")}
         {item("people-outline", "Casal", `${householdName} · convidar parceiro(a)`, "/meu-casal", true)}
       </Card>
 

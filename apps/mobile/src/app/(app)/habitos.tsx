@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { View } from "react-native";
-import { categoryName, detectHabits, formatMonthShort, addMonthsToKey } from "@financas/core";
+import { categoryName, detectHabits, formatMonthShort } from "@financas/core";
 import { formatBRL } from "@/lib/format";
 import { Badge, Body, Card, Empty, ErrorText, H1, Loading, Money, Screen, Small } from "@/components/ui";
-import { monthsOf, useAnalysis } from "@/lib/analysis";
+import { latestStatementMonth, monthsOf, useAnalysis } from "@/lib/analysis";
 import { space, useTheme } from "@/lib/theme";
 
 export default function Habitos() {
@@ -12,7 +12,7 @@ export default function Habitos() {
   const view = useMemo(() => {
     if (!data) return null;
     const months = monthsOf(data.txs);
-    const latest = months[months.length - 1];
+    const latest = latestStatementMonth(data);
     if (!latest) return null;
     return { latest, habits: detectHabits(data.txs, latest), from: months[Math.max(months.length - 6, 0)]! };
   }, [data]);

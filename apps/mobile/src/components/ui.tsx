@@ -68,7 +68,7 @@ export function Button({ title, onPress, variant = "primary", loading, disabled,
   title: string; onPress: () => void; variant?: "primary" | "secondary" | "danger" | "ghost"; loading?: boolean; disabled?: boolean; small?: boolean;
 }) {
   const t = useTheme();
-  const bg = variant === "primary" ? t.primary : variant === "danger" ? t.danger : "transparent";
+  const bg = variant === "primary" ? t.primaryFill : variant === "danger" ? t.dangerFill : "transparent";
   const fg = variant === "primary" || variant === "danger" ? t.onPrimary : variant === "ghost" ? t.primary : t.text;
   const off = disabled || loading;
   return (
@@ -89,7 +89,7 @@ export function Button({ title, onPress, variant = "primary", loading, disabled,
         flexDirection: "row",
         gap: 8,
         opacity: off ? 0.5 : pressed ? 0.8 : 1,
-        minHeight: small ? 36 : 48,
+        minHeight: small ? 44 : 48,
       })}
     >
       {loading ? <ActivityIndicator color={fg} /> : null}
@@ -107,9 +107,9 @@ export function Chip({ label, selected, onPress, color }: { label: string; selec
       onPress={onPress}
       style={{
         flexDirection: "row", alignItems: "center", gap: 6,
-        paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, minHeight: 36,
-        backgroundColor: selected ? t.primary : t.surface,
-        borderWidth: 1, borderColor: selected ? t.primary : t.border,
+        paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, minHeight: 44,
+        backgroundColor: selected ? t.primaryFill : t.surface,
+        borderWidth: 1, borderColor: selected ? t.primaryFill : t.border,
       }}
     >
       {color ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color }} /> : null}

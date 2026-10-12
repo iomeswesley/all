@@ -51,3 +51,16 @@ export function manualEntryMessage(p: { byName: string; amountCents: number; des
     categoryIdentifier: p.needsReview ? CATEGORIZE_ACTIONS_ID : undefined,
   };
 }
+
+/** Botões da notificação "X lançou…": as categorias mais comuns de Pix/dinheiro (o resto fica em Revisar). */
+export const CATEGORIZE_ACTIONS: readonly { identifier: string; title: string; categoryId: number }[] = [
+  { identifier: "cat:1", title: "Mercado", categoryId: 1 },
+  { identifier: "cat:2", title: "Restaurante", categoryId: 2 },
+  { identifier: "cat:3", title: "Transporte", categoryId: 3 },
+];
+
+/** "cat:2" → 2; qualquer outra coisa (toque normal, ação desconhecida) → null. */
+export function categoryFromAction(identifier: string): number | null {
+  const found = CATEGORIZE_ACTIONS.find((a) => a.identifier === identifier);
+  return found ? found.categoryId : null;
+}

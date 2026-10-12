@@ -1,5 +1,5 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { hiddenTotalsToTx, type AnalyticsTx, type BudgetRow, type HiddenTotal, type RecurringTx } from "@financas/core";
 import { usePrefs } from "./prefs";
 import { supabase } from "./supabase";
@@ -23,7 +23,9 @@ export function useLoad<T>(loader: () => Promise<T>, deps: unknown[] = []) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const loaderRef = useRef(loader);
-  loaderRef.current = loader;
+  useEffect(() => {
+    loaderRef.current = loader; // sempre a versão mais recente, atualizada depois do render
+  });
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -37,8 +39,14 @@ export function useLoad<T>(loader: () => Promise<T>, deps: unknown[] = []) {
     }
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useFocusEffect(useCallback(() => void reload(), [reload, ...deps]));
+  const depsKey = JSON.stringify(deps);
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+      // depsKey faz recarregar quando os parâmetros da tela mudam (ex.: id da fatura)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reload, depsKey]),
+  );
   return { data, error, loading, reload };
 }
 
@@ -61,7 +69,7 @@ const VIEW_COLUMNS =
   "id, statement_id, statement_month, posted_on, description_raw, description_clean, merchant_name, amount_cents, amount_usd_cents, category_id, kind, owner_user_id, is_private, installment_n, installment_total, needs_review, card_last4, fx_rate, tax_deductible, tax_kind, attachment_path";
 
 interface ViewRow {
-  id: string; statement_id: string; statement_month: string; posted_on: string; description_raw: string; description_clean: string;
+  id: string; statement_id: string | null; statement_month: string; posted_on: string; description_raw: string; description_clean: string;
   merchant_name: string | null; amount_cents: number; amount_usd_cents: number | null; category_id: number | null; kind: TxRow["kind"];
   owner_user_id: string | null; is_private: boolean; installment_n: number | null; installment_total: number | null; needs_review: boolean; card_last4: string | null;
   fx_rate: number | null; tax_deductible: boolean; tax_kind: TxRow["taxKind"]; attachment_path: string | null;
@@ -69,7 +77,7 @@ interface ViewRow {
 
 export const toTxRow = (r: ViewRow): TxRow => ({
   id: r.id,
-  statementId: r.statement_id,
+  statementId: r.statement_id ?? "",
   statementMonth: r.statement_month,
   postedOn: r.posted_on,
   descriptionRaw: r.description_raw,

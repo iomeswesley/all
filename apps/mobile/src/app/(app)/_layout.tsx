@@ -23,6 +23,9 @@ export default function AppLayout() {
       <Stack.Screen name="metas" options={{ title: "Metas" }} />
       <Stack.Screen name="perguntas" options={{ title: "Pergunte aos dados" }} />
       <Stack.Screen name="cartao" options={{ title: "Monitor do cartão" }} />
+      <Stack.Screen name="lancar" options={{ title: "Lançar gasto", presentation: "modal" }} />
+      <Stack.Screen name="lancamentos" options={{ title: "Pix e dinheiro" }} />
+      <Stack.Screen name="regras" options={{ title: "Regras" }} />
     </Stack>
   );
 }

@@ -31,3 +31,6 @@ Este ambiente não tem celular, projeto Supabase nem Deno. Portanto **não foram
 | Categorização fraca no início | ~27% dos lançamentos reais caem em "Revisar" no 1º dia; cada correção vira regra e some nos meses seguintes |
 | PDF com senha | O app pede a senha na hora; ela não é guardada |
 | Dados pessoais em fixtures | Anonimizadas por script; verificado sem nome/endereço/cartão/código de barras |
+
+
+> **Atualização:** a tela de regras, o lançamento manual (Pix/dinheiro), os botões de categoria na notificação e o acabamento (ícone, splash, contraste, lint) foram feitos depois — veja [COMPLEMENTOS.md](COMPLEMENTOS.md).

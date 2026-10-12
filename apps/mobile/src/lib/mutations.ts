@@ -1,4 +1,4 @@
-import { decodeDescription, patternMatches, reconcile, ruleFromCorrection, type DeclaredTotals, type HiddenSums, type ReconTx, type Rule } from "@financas/core";
+import { reconcile, ruleFromCorrection, ruleMatchesDescription, type DeclaredTotals, type HiddenSums, type ReconTx, type Rule } from "@financas/core";
 import { fetchAll } from "./data";
 import { supabase } from "./supabase";
 import type { StatementRow } from "./data";
@@ -126,11 +126,7 @@ export async function applyCategory(opts: {
   return Number(data ?? ids.length);
 }
 
-function matchesRule(rawDescription: string, rule: Pick<Rule, "pattern" | "matchType">): boolean {
-  const d = decodeDescription(rawDescription);
-  const keys = d.processor ? [d.key, d.vendorKey] : [d.key];
-  return keys.some((k) => patternMatches(k, rule.pattern, rule.matchType));
-}
+const matchesRule = (rawDescription: string, rule: Pick<Rule, "pattern" | "matchType">) => ruleMatchesDescription(rule, rawDescription);
 
 /** Quantos lançamentos a regra afetaria (para a legenda "Sempre que aparecer"). */
 export function countMatches(descriptions: readonly string[], description: string): number {
@@ -157,22 +153,8 @@ export async function setPrivate(ids: readonly string[], ownerUserId: string, is
   }
 }
 
-export interface NotifyResponse {
-  status?: string;
-  month?: string;
-  alerts?: { categoryId: number; level: "warn80" | "over100"; percent: number; title: string; body: string }[];
-  pushSent?: number;
-}
-
-/** Depois de confirmar: alertas de orçamento + aviso ao par. Falhar aqui nunca desfaz a confirmação. */
-export async function notifyConfirmed(statementId: string): Promise<NotifyResponse | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke<NotifyResponse>("notify", { body: { statementId } });
-    return error ? null : data;
-  } catch {
-    return null;
-  }
-}
+export { notifyStatement as notifyConfirmed } from "./notify";
+export type { NotifyResponse } from "./notify";
 
 export async function saveBudget(householdId: string, categoryId: number, month: string, limitCents: number) {
   const { error } = await supabase
