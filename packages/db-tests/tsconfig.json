@@ -11,6 +11,8 @@
     "test",
     "../../scripts/gen-seed-sql.mjs",
     "../../supabase/functions/parse-statement/process.ts",
-    "../../supabase/functions/parse-statement/supabase-store.ts"
+    "../../supabase/functions/parse-statement/supabase-store.ts",
+    "../../supabase/functions/notify/process.ts",
+    "../../supabase/functions/notify/supabase-store.ts"
   ]
 }

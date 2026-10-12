@@ -188,3 +188,22 @@ describe("gasto pessoal do parceiro (agregado oculto)", () => {
     expect(withHidden.totalDiffCents).toBe(0);
   });
 });
+
+import { budgetAlertMessage, importMessage } from "../src/notifications.ts";
+describe("mensagens de push", () => {
+  it("80% e 100% em português, com valores em R$", () => {
+    const st = budgetStatuses(new Map([[CAT.RESTAURANTE, 100000]]), [{ statementMonth: "2026-09", postedOn: "2026-09-01", descriptionRaw: "X", amountCents: 85000, categoryId: CAT.RESTAURANTE, kind: "avista", ownerUserId: null }]);
+    const [a] = pendingAlerts(st, "2026-09", new Set());
+    expect(budgetAlertMessage(a!)).toEqual({
+      title: "Alimentação (restaurante/delivery) chegou a 85% do orçamento",
+      body: "R$ 850,00 de R$ 1.000,00; restam R$ 150,00 na fatura de set/26.",
+      data: { type: "budget", route: "/orcamento", month: "2026-09", categoryId: CAT.RESTAURANTE },
+    });
+    const over = budgetStatuses(new Map([[CAT.RESTAURANTE, 100000]]), [{ statementMonth: "2026-09", postedOn: "2026-09-01", descriptionRaw: "X", amountCents: 112000, categoryId: CAT.RESTAURANTE, kind: "avista", ownerUserId: null }]);
+    expect(budgetAlertMessage(pendingAlerts(over, "2026-09", new Set())[0]!).title).toBe("Orçamento estourado: Alimentação (restaurante/delivery)");
+  });
+  it("aviso de importação leva para Revisar quando há pendências", () => {
+    expect(importMessage({ byName: "Ana", month: "2026-09", count: 94, reviewCount: 20 })).toMatchObject({ title: "Ana confirmou a fatura de set/26", body: "94 lançamentos. 20 para revisar.", data: { route: "/revisar" } });
+    expect(importMessage({ byName: "Ana", month: "2026-09", count: 5, reviewCount: 0 }).body).toBe("5 lançamentos. Tudo categorizado.");
+  });
+});

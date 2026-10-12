@@ -30,5 +30,8 @@ otp_expiry = 3600
 enabled = true
 file_size_limit = "20MiB"
 
+[functions.notify]
+verify_jwt = true
+
 [functions.parse-statement]
 verify_jwt = true
