@@ -1,6 +1,6 @@
 {
   "imports": {
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.45.4",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.3",
     "unpdf": "npm:unpdf@0.12.1"
   }
 }

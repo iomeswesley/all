@@ -349,3 +349,14 @@ Cada commit mantém `pnpm test` verde. Ao fim da fase: lista de pendências e ri
 1. **PDF real de uma fatura Santander Unique** (ideal: 2–3 meses, com parcelas, estorno, compra em US$ e cartão adicional). Informar se tem senha.
 2. Criar um projeto Supabase gratuito (guia passo a passo no commit 4/5).
 3. Instalar o **Expo Go** nos dois celulares (Android/iOS).
+
+## 13. Decisões tomadas durante a implementação (Fase 1)
+
+- **Leitor por coordenadas:** o texto corrido do PDF mistura as duas colunas da página; o leitor separa por x (fronteira 298 pt) e lê esquerda → direita. Cobre as 7 faturas reais.
+- **Conferência de parcelas futuras:** `Σ (total − n) × valor` fecha exato quando as parcelas são iguais; o banco arredonda centavos nas parcelas finais, então o app aceita desvio de até 5 centavos por parcela restante e o rotula "≈ arredondamento".
+- **IOF de compras em dólar** é um lançamento próprio (`encargo`) ligado à compra; faz parte do total de despesas do Brasil.
+- **Créditos de centavos** (ex.: −R$ 0,02 em parcelas) entram como `estorno` na seção de pagamentos e créditos.
+- **Competência** = mês do vencimento da fatura.
+- **Dono** = `owner_user_id` (null = nosso). Dono do cartão é sugestão automática; regras por estabelecimento podem fixar o dono.
+- **Sem service role:** a Edge Function usa o JWT do usuário; a RLS vale também na importação.
+- **Core duplicado em `supabase/functions/_shared/core`** (o deploy só empacota essa pasta); teste de sincronia impede divergência.
