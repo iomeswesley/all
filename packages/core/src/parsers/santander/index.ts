@@ -43,6 +43,8 @@ export function parseSantanderStatement(items: readonly PdfTextItem[]): ParsedSt
   }
   return {
     bank: "santander",
+    format: "santander_pdf",
+    hasDeclaredTotals: true,
     product: header.product,
     closingDate: header.closingDate,
     dueDate: header.dueDate,

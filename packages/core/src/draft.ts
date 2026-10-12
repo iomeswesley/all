@@ -28,16 +28,17 @@ export interface DraftTransaction {
 }
 
 export interface DraftStatement {
+  format: ParsedStatement["format"];
   closingDate: string;
   dueDate: string;
   periodStart: string | null;
   statementMonth: string;
   declaredTotalCents: number;
-  declaredPreviousBalanceCents: number;
-  declaredPaymentsCents: number;
-  declaredCreditsCents: number;
-  declaredExpensesCents: number;
-  declaredExpensesUsdCents: number;
+  declaredPreviousBalanceCents: number | null;
+  declaredPaymentsCents: number | null;
+  declaredCreditsCents: number | null;
+  declaredExpensesCents: number | null;
+  declaredExpensesUsdCents: number | null;
   declaredFutureCents: number | null;
   computedTotalCents: number;
   computedFutureCents: number;
@@ -107,19 +108,22 @@ export function buildDraft(parsed: ParsedStatement, opts: BuildDraftOptions): Dr
   });
 
   const annuity = parsed.annuity[0] ?? null;
+  const generic = parsed.format !== "santander_pdf";
   return {
     statement: {
+      format: parsed.format,
       closingDate: parsed.closingDate,
       dueDate: parsed.dueDate,
       periodStart: parsed.periodStart,
       statementMonth: statementMonthKey(parsed.dueDate),
-      declaredTotalCents: parsed.totalDueCents,
-      declaredPreviousBalanceCents: parsed.summary.previousBalanceCents,
-      declaredPaymentsCents: parsed.summary.paymentsCents,
-      declaredCreditsCents: parsed.summary.creditsCents,
-      declaredExpensesCents: parsed.summary.domesticExpensesCents + parsed.summary.foreignExpensesCents,
-      declaredExpensesUsdCents: parsed.summary.foreignExpensesUsdCents,
-      declaredFutureCents: parsed.futureObligationsCents,
+      // sem total do banco, o "declarado" é só o calculado (e os campos do resumo ficam vazios)
+      declaredTotalCents: parsed.hasDeclaredTotals ? parsed.totalDueCents : reconcile.computedTotalCents,
+      declaredPreviousBalanceCents: generic ? null : parsed.summary.previousBalanceCents,
+      declaredPaymentsCents: generic ? null : parsed.summary.paymentsCents,
+      declaredCreditsCents: generic ? null : parsed.summary.creditsCents,
+      declaredExpensesCents: generic ? (parsed.hasDeclaredTotals ? parsed.totalDueCents : null) : parsed.summary.domesticExpensesCents + parsed.summary.foreignExpensesCents,
+      declaredExpensesUsdCents: generic ? null : parsed.summary.foreignExpensesUsdCents,
+      declaredFutureCents: generic ? null : parsed.futureObligationsCents,
       computedTotalCents: reconcile.computedTotalCents,
       computedFutureCents: reconcile.computedFutureCents,
       minimumPaymentCents: parsed.minimumPaymentCents,

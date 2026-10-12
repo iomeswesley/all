@@ -35,8 +35,11 @@ export interface ReconcileCheck {
   note?: string;
 }
 
+/** "unverified": o arquivo não traz total para conferir (OFX, JSON sem total) — a soma não pôde ser verificada. */
+export type ReconcileStatus = CheckStatus | "unverified";
+
 export interface ReconcileResult {
-  status: CheckStatus;
+  status: ReconcileStatus;
   /** Pode confirmar sem revisão manual (nenhuma checagem em "fail"). */
   canAutoConfirm: boolean;
   /** Total calculado a partir dos lançamentos (saldo anterior + despesas − pagamentos − créditos) */
@@ -132,6 +135,31 @@ export function declaredFromParsed(st: ParsedStatement): DeclaredTotals {
   };
 }
 
+/**
+ * Conferência para fontes sem os totais do resumo da fatura (OFX, JSON assistido).
+ * Com total informado: Σ lançamentos (compras − estornos, sem pagamentos) = total. Sem total: "unverified".
+ */
+export function reconcileGeneric(declaredTotalCents: number | null, txs: readonly ReconTx[]): ReconcileResult {
+  const computed = txs.filter((t) => t.kind !== "pagamento").reduce((a, t) => a + t.amountCents, 0);
+  const future = projectedFutureObligations(txs);
+  const checks: ReconcileCheck[] = [];
+  let status: ReconcileStatus = "unverified";
+  if (declaredTotalCents !== null) {
+    const diff = computed - declaredTotalCents;
+    checks.push({ id: "total", label: "Soma dos lançamentos (compras − estornos) = total informado", expectedCents: declaredTotalCents, actualCents: computed, diffCents: diff, status: diff === 0 ? "ok" : "fail" });
+    status = diff === 0 ? "ok" : "fail";
+  }
+  return {
+    status,
+    canAutoConfirm: status !== "fail",
+    computedTotalCents: computed,
+    totalDiffCents: declaredTotalCents === null ? 0 : computed - declaredTotalCents,
+    computedFutureCents: future.cents,
+    checks,
+  };
+}
+
 export function reconcileParsed(st: ParsedStatement): ReconcileResult {
+  if (st.format !== "santander_pdf") return reconcileGeneric(st.hasDeclaredTotals ? st.totalDueCents : null, st.transactions);
   return reconcile(declaredFromParsed(st), st.transactions);
 }

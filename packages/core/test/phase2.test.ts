@@ -168,7 +168,7 @@ describe("gasto pessoal do parceiro (agregado oculto)", () => {
 
   it("a conferência do parceiro fecha somando os totais ocultos", () => {
     const d = drafts.get("2026-09")!;
-    const declared = { totalDueCents: d.statement.declaredTotalCents, previousBalanceCents: d.statement.declaredPreviousBalanceCents, expensesCents: d.statement.declaredExpensesCents, expensesUsdCents: d.statement.declaredExpensesUsdCents, paymentsCents: d.statement.declaredPaymentsCents, creditsCents: d.statement.declaredCreditsCents, futureObligationsCents: d.statement.declaredFutureCents };
+    const declared = { totalDueCents: d.statement.declaredTotalCents, previousBalanceCents: d.statement.declaredPreviousBalanceCents, expensesCents: d.statement.declaredExpensesCents ?? 0, expensesUsdCents: d.statement.declaredExpensesUsdCents, paymentsCents: d.statement.declaredPaymentsCents ?? 0, creditsCents: d.statement.declaredCreditsCents ?? 0, futureObligationsCents: d.statement.declaredFutureCents };
     // o parceiro não vê 3 lançamentos (um deles parcelado)
     const hiddenIdx = [d.transactions.findIndex((t) => t.kind === "avista" && t.amountUsdCents === null), d.transactions.length - 1 - [...d.transactions].reverse().findIndex((t) => t.kind === "avista" && t.amountCents > 5000 && t.amountUsdCents === null), d.transactions.findIndex((t) => t.kind === "parcela")];
     const hiddenSet = new Set(hiddenIdx);

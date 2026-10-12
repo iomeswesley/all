@@ -51,8 +51,15 @@ export interface CardBlockTotal {
   totalUsdCents: number;
 }
 
+/** Formato de origem do arquivo importado. */
+export type ImportFormat = "santander_pdf" | "ofx" | "json";
+
 export interface ParsedStatement {
-  bank: "santander";
+  bank: string;
+  /** formato de origem (decide como a conferência é feita) */
+  format: ImportFormat;
+  /** True quando o arquivo traz um total para conferir (fatura Santander; JSON com declaredTotalCents). OFX não traz. */
+  hasDeclaredTotals: boolean;
   product: string | null;
   closingDate: IsoDate;
   dueDate: IsoDate;
