@@ -1,4 +1,4 @@
-import { decodeDescription, patternMatches, reconcile, ruleFromCorrection, type DeclaredTotals, type ReconTx, type Rule } from "@financas/core";
+import { decodeDescription, patternMatches, reconcile, ruleFromCorrection, type DeclaredTotals, type HiddenSums, type ReconTx, type Rule } from "@financas/core";
 import { fetchAll } from "./data";
 import { supabase } from "./supabase";
 import type { StatementRow } from "./data";
@@ -25,10 +25,11 @@ export interface TxFull extends ReconTx {
   owner_user_id: string | null;
   card_last4: string | null;
   fx_rate: number | null;
+  is_private: boolean;
 }
 
 export const TX_FULL_COLUMNS =
-  "id, posted_on, description_raw, description_clean, amount_cents, amount_usd_cents, kind, section, installment_n, installment_total, category_id, needs_review, owner_user_id, card_last4, fx_rate";
+  "id, posted_on, description_raw, description_clean, amount_cents, amount_usd_cents, kind, section, installment_n, installment_total, category_id, needs_review, owner_user_id, card_last4, fx_rate, is_private";
 
 type Raw = Record<string, unknown>;
 export const toTxFull = (r: Raw): TxFull => ({
@@ -47,11 +48,24 @@ export const toTxFull = (r: Raw): TxFull => ({
   owner_user_id: (r.owner_user_id as string | null) ?? null,
   card_last4: (r.card_last4 as string | null) ?? null,
   fx_rate: r.fx_rate === null ? null : Number(r.fx_rate),
+  is_private: Boolean(r.is_private),
 });
 
 /** Recalcula a conferência com os lançamentos atuais e grava no resumo da fatura. */
+export async function fetchHiddenSums(statementId: string): Promise<HiddenSums> {
+  const { data, error } = await supabase.rpc("statement_hidden_sums", { p_statement_id: statementId });
+  if (error) throw new Error(error.message);
+  const r = ((data ?? []) as Record<string, unknown>[])[0] ?? {};
+  return {
+    expensesCents: Number(r.expenses_cents ?? 0),
+    expensesUsdCents: Number(r.expenses_usd_cents ?? 0),
+    futureCents: Number(r.future_cents ?? 0),
+    remainingInstallments: Number(r.remaining_installments ?? 0),
+  };
+}
+
 export async function refreshReconciliation(statement: StatementRow, txs: readonly TxFull[]) {
-  const result = reconcile(declaredOf(statement), txs);
+  const result = reconcile(declaredOf(statement), txs, await fetchHiddenSums(statement.id));
   const { error } = await supabase
     .from("statements")
     .update({
@@ -132,4 +146,37 @@ export async function applyToIds(ids: readonly string[], categoryId: number, own
     const { error } = await supabase.from("transactions").update(patch).in("id", ids.slice(i, i + 100));
     if (error) throw new Error(error.message);
   }
+}
+
+/** Gasto pessoal: só o dono vê os itens; o par vê apenas o total da categoria. */
+export async function setPrivate(ids: readonly string[], ownerUserId: string, isPrivate: boolean) {
+  for (let i = 0; i < ids.length; i += 100) {
+    const patch = isPrivate ? { is_private: true, owner_user_id: ownerUserId } : { is_private: false };
+    const { error } = await supabase.from("transactions").update(patch).in("id", ids.slice(i, i + 100));
+    if (error) throw new Error(error.message);
+  }
+}
+
+export interface NotifyResponse {
+  status?: string;
+  month?: string;
+  alerts?: { categoryId: number; level: "warn80" | "over100"; percent: number; title: string; body: string }[];
+  pushSent?: number;
+}
+
+/** Depois de confirmar: alertas de orçamento + aviso ao par. Falhar aqui nunca desfaz a confirmação. */
+export async function notifyConfirmed(statementId: string): Promise<NotifyResponse | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke<NotifyResponse>("notify", { body: { statementId } });
+    return error ? null : data;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveBudget(householdId: string, categoryId: number, month: string, limitCents: number) {
+  const { error } = await supabase
+    .from("budgets")
+    .upsert({ household_id: householdId, category_id: categoryId, month: `${month}-01`, limit_cents: limitCents }, { onConflict: "household_id,category_id,month" });
+  if (error) throw new Error(error.message);
 }

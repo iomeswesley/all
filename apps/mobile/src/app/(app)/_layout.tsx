@@ -14,6 +14,9 @@ export default function AppLayout() {
       <Stack.Screen name="recorrencias" options={{ title: "Recorrências" }} />
       <Stack.Screen name="cartoes" options={{ title: "Cartões e donos" }} />
       <Stack.Screen name="meu-casal" options={{ title: "Casal" }} />
+      <Stack.Screen name="orcamento" options={{ title: "Orçamento" }} />
+      <Stack.Screen name="checkin" options={{ title: "Check-in do mês" }} />
+      <Stack.Screen name="encargos" options={{ title: "Encargos" }} />
     </Stack>
   );
 }

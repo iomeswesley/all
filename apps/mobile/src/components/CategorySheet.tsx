@@ -12,19 +12,22 @@ export interface CategoryChoice {
   ownerUserId: string | null | undefined;
   /** criar regra para todos os lançamentos parecidos, para os dois */
   always: boolean;
+  /** gasto pessoal: só o dono vê os itens (undefined = não alterar) */
+  isPrivate?: boolean;
 }
 
 /**
  * Folha de correção: toque na categoria e pronto (2 toques no total: abrir → categoria).
  * "Sempre" vem ligado: a correção vira regra para o casal inteiro.
  */
-export function CategorySheet({ visible, title, subtitle, matchCount, onClose, onChoose }: {
-  visible: boolean; title: string; subtitle?: string; matchCount?: number; onClose: () => void; onChoose: (c: CategoryChoice) => void;
+export function CategorySheet({ visible, title, subtitle, matchCount, allowPrivate, onClose, onChoose }: {
+  visible: boolean; title: string; subtitle?: string; matchCount?: number; allowPrivate?: boolean; onClose: () => void; onChoose: (c: CategoryChoice) => void;
 }) {
   const t = useTheme();
   const { state } = useSession();
   const [always, setAlways] = useState(true);
   const [owner, setOwner] = useState<string | null | undefined>(undefined);
+  const [isPrivate, setIsPrivate] = useState(false);
   const ready = state.status === "ready" ? state : null;
 
   return (
@@ -55,10 +58,20 @@ export function CategorySheet({ visible, title, subtitle, matchCount, onClose, o
             </View>
           ) : null}
 
+          {allowPrivate && ready?.partner ? (
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.md }}>
+              <View style={{ flex: 1 }}>
+                <Body>Gasto pessoal 🔒</Body>
+                <Small>Só eu vejo este item. {ready.partner.display_name} vê apenas o total da categoria.</Small>
+              </View>
+              <Switch value={isPrivate} onValueChange={setIsPrivate} accessibilityLabel="Gasto pessoal" />
+            </View>
+          ) : null}
+
           <Small>Categoria</Small>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }}>
             {CATEGORIES.map((c) => (
-              <Chip key={c.id} label={c.name} color={categoryColor(t, c.id)} onPress={() => onChoose({ categoryId: c.id, ownerUserId: owner, always })} />
+              <Chip key={c.id} label={c.name} color={categoryColor(t, c.id)} onPress={() => onChoose({ categoryId: c.id, ownerUserId: owner, always, isPrivate: allowPrivate && isPrivate ? true : undefined })} />
             ))}
           </View>
         </ScrollView>

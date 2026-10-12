@@ -14,6 +14,7 @@ export interface TxItemData {
   installmentTotal: number | null;
   needsReview: boolean;
   ownerLabel?: string | null;
+  isPrivate?: boolean;
 }
 
 export function TxItem({ tx, onPress, onMore }: { tx: TxItemData; onPress?: () => void; onMore?: () => void }) {
@@ -35,7 +36,7 @@ export function TxItem({ tx, onPress, onMore }: { tx: TxItemData; onPress?: () =
         <View style={{ width: 8, alignSelf: "stretch", borderRadius: 4, backgroundColor: tx.needsReview ? t.warning : categoryColor(t, tx.categoryId), opacity: tx.needsReview ? 1 : 0.9 }} />
         <View style={{ flex: 1, gap: 2 }}>
           <Body numberOfLines={1} style={{ fontWeight: "500" }}>{tx.descriptionClean}</Body>
-          <Small>{formatBrDayMonth(tx.postedOn)} · {parts.join(" · ")}{tx.needsReview ? " · revisar" : ""}</Small>
+          <Small>{formatBrDayMonth(tx.postedOn)} · {parts.join(" · ")}{tx.needsReview ? " · revisar" : ""}{tx.isPrivate ? " · 🔒 pessoal" : ""}</Small>
         </View>
         <Money cents={tx.amountCents} color={tx.amountCents < 0 ? t.success : undefined} />
       </Pressable>

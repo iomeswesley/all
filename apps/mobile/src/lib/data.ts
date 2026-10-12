@@ -1,6 +1,6 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import type { AnalyticsTx, RecurringTx } from "@financas/core";
+import { hiddenTotalsToTx, type AnalyticsTx, type BudgetRow, type HiddenTotal, type RecurringTx } from "@financas/core";
 import { supabase } from "./supabase";
 
 /** O PostgREST devolve no máximo 1000 linhas por chamada: pagina até acabar. */
@@ -122,4 +122,40 @@ export async function fetchStatements(): Promise<StatementRow[]> {
   const { data, error } = await supabase.from("statements").select(STATEMENT_COLUMNS).order("due_date", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((s) => ({ ...(s as unknown as StatementRow), declared_total_cents: Number(s.declared_total_cents), computed_total_cents: Number(s.computed_total_cents) }));
+}
+
+/** Totais do gasto pessoal do par (sem itens), por competência e categoria. */
+export async function fetchHiddenTotals(): Promise<HiddenTotal[]> {
+  const { data, error } = await supabase.rpc("partner_private_totals");
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    statementMonth: r.statement_month as string,
+    categoryId: (r.category_id as number | null) ?? null,
+    ownerUserId: r.owner_user_id as string,
+    totalCents: Number(r.total_cents),
+    count: Number(r.n),
+  }));
+}
+
+/** Lançamentos confirmados + o gasto pessoal do par como linhas agregadas (só para totais). */
+export async function fetchDashboardTransactions(nameOf: (userId: string) => string): Promise<TxRow[]> {
+  const [rows, hidden] = await Promise.all([fetchConfirmedTransactions(), fetchHiddenTotals()]);
+  const synthetic: TxRow[] = hiddenTotalsToTx(hidden, nameOf).map((t, i) => ({
+    ...t,
+    id: `hidden-${i}`,
+    statementId: "",
+    descriptionClean: t.merchantName ?? "Gasto pessoal",
+    amountUsdCents: null,
+    installmentN: null,
+    installmentTotal: null,
+    needsReview: false,
+    cardLast4: null,
+  }));
+  return [...rows, ...synthetic];
+}
+
+export async function fetchBudgetRows(): Promise<BudgetRow[]> {
+  const { data, error } = await supabase.from("budgets").select("category_id, month, limit_cents");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({ categoryId: r.category_id as number, month: (r.month as string).slice(0, 7), limitCents: Number(r.limit_cents) }));
 }

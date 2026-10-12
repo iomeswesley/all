@@ -22,7 +22,13 @@
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "color": "#2a78d6"
+        }
+      ]
     ]
   }
 }

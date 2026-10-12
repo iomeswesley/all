@@ -4,7 +4,8 @@ import { categoryName, decodeDescription, formatBRL, formatBrDayMonth, merchantK
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { Body, Card, Chip, Empty, ErrorText, H1, Loading, Money, Screen, Small } from "@/components/ui";
 import { fetchAll, useLoad } from "@/lib/data";
-import { applyCategory, applyToIds } from "@/lib/mutations";
+import { applyCategory, applyToIds, setPrivate } from "@/lib/mutations";
+import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { categoryColor, space, useTheme } from "@/lib/theme";
 
@@ -30,6 +31,7 @@ async function load() {
 
 export default function Revisar() {
   const t = useTheme();
+  const { me } = useReady();
   const { data, error, loading, reload } = useLoad(load);
   const [sheet, setSheet] = useState<Group | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,6 +56,7 @@ export default function Revisar() {
     try {
       if (c.always) await applyCategory({ description: g.items[0]!.description_raw, txId: g.items[0]!.id, categoryId: c.categoryId, ownerUserId: c.ownerUserId, always: true });
       else await applyToIds(g.items.map((i) => i.id), c.categoryId, c.ownerUserId);
+      if (c.isPrivate) await setPrivate(g.items.map((i) => i.id), me.user_id, true);
       await reload();
     } catch (e) {
       setFail((e as Error).message);
@@ -95,6 +98,7 @@ export default function Revisar() {
         title={sheet?.label ?? ""}
         subtitle={sheet ? formatBRL(sheet.totalCents) : undefined}
         matchCount={sheet?.items.length}
+        allowPrivate
         onClose={() => setSheet(null)}
         onChoose={(c) => sheet && void apply(sheet, c)}
       />

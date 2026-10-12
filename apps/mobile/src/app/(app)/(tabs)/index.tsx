@@ -3,11 +3,11 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import {
-  addMonthsToKey, categoryName, compareMonths, formatBRL, formatMonthLong, formatMonthShort, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, type Change,
+  addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBRL, formatMonthLong, formatMonthShort, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, type Change,
 } from "@financas/core";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { Badge, Body, Button, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { fetchConfirmedTransactions, useLoad } from "@/lib/data";
+import { budgetsFor, useAnalysis } from "@/lib/analysis";
 import { useReady } from "@/lib/session";
 import { space, useTheme } from "@/lib/theme";
 
@@ -15,7 +15,8 @@ export default function Inicio() {
   const t = useTheme();
   const router = useRouter();
   const { me, partner, householdName } = useReady();
-  const { data, error, loading, reload } = useLoad(fetchConfirmedTransactions);
+  const { data: analysis, error, loading, reload } = useAnalysis();
+  const data = analysis?.txs ?? null;
   const [picked, setPicked] = useState<string | null>(null);
 
   const view = useMemo(() => {
@@ -37,8 +38,9 @@ export default function Inicio() {
       top: topMerchants(cur, 10),
       split: splitByOwner(cur, me.user_id),
       reviewCount: cur.filter((x) => x.needsReview).length,
+      budgets: budgetStatuses(budgetsFor(analysis?.budgetRows ?? [], month), cur),
     };
-  }, [data, picked, me.user_id]);
+  }, [data, analysis, picked, me.user_id]);
 
   if (loading && !data) return <Screen><Loading /></Screen>;
 
@@ -85,8 +87,21 @@ export default function Inicio() {
             </Card>
           ) : null}
 
+          {view.budgets.some((b) => b.level !== "ok") ? (
+            <Card>
+              <SectionTitle right={<Button title="Orçamento" small variant="ghost" onPress={() => router.push("/orcamento")} />}>Atenção ao orçamento</SectionTitle>
+              {view.budgets.filter((b) => b.level !== "ok").slice(0, 4).map((b) => (
+                <View key={b.categoryId} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm }}>
+                  <Body numberOfLines={1} style={{ flex: 1, fontSize: 14 }}>{categoryName(b.categoryId)}</Body>
+                  <Small>{formatBRL(b.spentCents)} / {formatBRL(b.limitCents)}</Small>
+                  <Badge label={`${b.percent}%`} tone={b.level === "over100" ? "bad" : "warn"} />
+                </View>
+              ))}
+            </Card>
+          ) : null}
+
           <Card>
-            <SectionTitle>Por categoria</SectionTitle>
+            <SectionTitle right={<Button title="Check-in" small variant="ghost" onPress={() => router.push("/checkin")} />}>Por categoria</SectionTitle>
             <CategoryDonut rows={view.byCategory} />
           </Card>
 

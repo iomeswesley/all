@@ -7,7 +7,7 @@ import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { TxItem } from "@/components/TxItem";
 import { Badge, Banner, Body, Button, Card, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { STATEMENT_COLUMNS, useLoad, type StatementRow } from "@/lib/data";
-import { applyCategory, confirmStatement, declaredOf, discardStatement, refreshReconciliation, toTxFull, TX_FULL_COLUMNS, type TxFull } from "@/lib/mutations";
+import { applyCategory, confirmStatement, declaredOf, discardStatement, fetchHiddenSums, notifyConfirmed, refreshReconciliation, setPrivate, toTxFull, TX_FULL_COLUMNS, type TxFull } from "@/lib/mutations";
 import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { radius, space, useTheme } from "@/lib/theme";
@@ -27,13 +27,14 @@ export default function ConferirFatura() {
   const { me, partner } = useReady();
 
   const { data, error, loading, reload } = useLoad(async () => {
-    const [st, tx] = await Promise.all([
+    const [st, tx, hidden] = await Promise.all([
       supabase.from("statements").select(STATEMENT_COLUMNS).eq("id", id).single(),
       supabase.from("transactions").select(TX_FULL_COLUMNS).eq("statement_id", id).order("posted_on").order("id"),
+      fetchHiddenSums(String(id)),
     ]);
     if (st.error) throw new Error(st.error.message);
     if (tx.error) throw new Error(tx.error.message);
-    return { statement: st.data as unknown as StatementRow, txs: (tx.data ?? []).map((r) => toTxFull(r as Record<string, unknown>)) };
+    return { statement: st.data as unknown as StatementRow, txs: (tx.data ?? []).map((r) => toTxFull(r as Record<string, unknown>)), hidden };
   }, [id]);
 
   const [sheetFor, setSheetFor] = useState<TxFull | null>(null);
@@ -41,7 +42,7 @@ export default function ConferirFatura() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const live = useMemo(() => (data ? reconcile(declaredOf(data.statement), data.txs) : null), [data]);
+  const live = useMemo(() => (data ? reconcile(declaredOf(data.statement), data.txs, data.hidden) : null), [data]);
   const ownerLabel = (uid: string | null) => (uid === null ? null : uid === me.user_id ? "meu" : partner?.display_name ?? "dela(e)");
 
   if (loading && !data) return <Screen><Loading /></Screen>;
@@ -66,11 +67,19 @@ export default function ConferirFatura() {
     run(async () => {
       setSheetFor(null);
       await applyCategory({ description: tx.description_raw, txId: tx.id, categoryId: c.categoryId, ownerUserId: c.ownerUserId, always: c.always });
+      if (c.isPrivate) await setPrivate([tx.id], me.user_id, true);
     });
 
   function confirm() {
     const force = live!.status === "fail";
-    const go = () => run(async () => { await confirmStatement(statement.id, force); router.back(); });
+    const go = () =>
+      run(async () => {
+        await confirmStatement(statement.id, force);
+        const res = await notifyConfirmed(statement.id); // melhor esforço: nunca desfaz a confirmação
+        const alerts = res?.alerts ?? [];
+        if (alerts.length > 0) Alert.alert("Atenção ao orçamento", alerts.map((a) => `• ${a.title}\n  ${a.body}`).join("\n\n"));
+        router.back();
+      });
     if (!force) return void go();
     Alert.alert(
       "A soma não bate",
@@ -111,6 +120,10 @@ export default function ConferirFatura() {
         </Banner>
       )}
 
+      {data.hidden.expensesCents !== 0 || data.hidden.futureCents !== 0 ? (
+        <Small>🔒 Há gastos pessoais de {partner?.display_name ?? "seu par"} nesta fatura. Você vê só o total (já incluído na conferência abaixo), não os itens.</Small>
+      ) : null}
+
       <Card>
         <SectionTitle>Conferência</SectionTitle>
         <Line label="Total da fatura (banco)" cents={statement.declared_total_cents} bold />
@@ -132,7 +145,7 @@ export default function ConferirFatura() {
             {items.map((x) => (
               <TxItem
                 key={x.id}
-                tx={{ id: x.id, postedOn: x.posted_on, descriptionClean: x.description_clean, amountCents: x.amountCents, amountUsdCents: x.amountUsdCents, categoryId: x.category_id, installmentN: x.installmentN, installmentTotal: x.installmentTotal, needsReview: x.needs_review, ownerLabel: ownerLabel(x.owner_user_id) }}
+                tx={{ id: x.id, postedOn: x.posted_on, descriptionClean: x.description_clean, amountCents: x.amountCents, amountUsdCents: x.amountUsdCents, categoryId: x.category_id, installmentN: x.installmentN, installmentTotal: x.installmentTotal, needsReview: x.needs_review, ownerLabel: ownerLabel(x.owner_user_id), isPrivate: x.is_private }}
                 onPress={x.kind === "pagamento" ? undefined : () => setSheetFor(x)}
                 onMore={() => setEditing(x)}
               />
@@ -159,6 +172,7 @@ export default function ConferirFatura() {
         visible={sheetFor !== null}
         title={sheetFor?.description_clean ?? ""}
         subtitle={sheetFor ? `${formatBRL(sheetFor.amountCents)}` : undefined}
+        allowPrivate
         onClose={() => setSheetFor(null)}
         onChoose={(c) => sheetFor && void choose(sheetFor)(c)}
       />
