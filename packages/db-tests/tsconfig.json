@@ -13,6 +13,8 @@
     "../../supabase/functions/notify/supabase-store.ts",
     "../../supabase/functions/parse-statement/process.ts",
     "../../supabase/functions/parse-statement/supabase-store.ts",
-    "test"
+    "test",
+    "../../supabase/functions/delete-account/process.ts",
+    "../../supabase/functions/delete-account/supabase-store.ts"
   ]
 }

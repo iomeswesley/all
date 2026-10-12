@@ -30,6 +30,9 @@ otp_expiry = 3600
 enabled = true
 file_size_limit = "20MiB"
 
+[functions.delete-account]
+verify_jwt = true
+
 [functions.notify]
 verify_jwt = true
 
