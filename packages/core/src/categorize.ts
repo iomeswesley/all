@@ -164,3 +164,27 @@ export function ruleFromCorrection(description: string, categoryId: number, owne
   const base = (decoded.processor ? decoded.vendorKey : decoded.key).replace(/\s+\d{2,}$/g, "").trim();
   return { pattern: base || decoded.key, matchType: "contains", categoryId, ownerUserId, priority: 100 };
 }
+
+/** A regra casa com esta descrição? (considera também o vendedor atrás de IFD*, MP*, ZP*…) */
+export function ruleMatchesDescription(rule: Pick<Rule, "pattern" | "matchType">, description: string): boolean {
+  const d = decodeDescription(description);
+  const keys = d.processor ? [d.key, d.vendorKey] : [d.key];
+  return keys.some((k) => patternMatches(k, rule.pattern, rule.matchType));
+}
+
+export const MATCH_TYPE_LABEL: Record<MatchType, string> = { contains: "contém", prefix: "começa com", regex: "expressão" };
+
+/** Valida um padrão digitado pela pessoa (regex quebrada não pode entrar). */
+export function validateRulePattern(pattern: string, matchType: MatchType): string | null {
+  const p = pattern.trim();
+  if (p.length < 2) return "O padrão precisa ter pelo menos 2 caracteres.";
+  if (p.length > 80) return "O padrão é longo demais (máximo 80).";
+  if (matchType === "regex") {
+    try {
+      new RegExp(p, "i");
+    } catch {
+      return "Expressão inválida.";
+    }
+  }
+  return null;
+}

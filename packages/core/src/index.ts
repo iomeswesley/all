@@ -25,3 +25,4 @@ export * from "./goals.ts";
 export * from "./cashflow.ts";
 export * from "./query.ts";
 export * from "./cardmonitor.ts";
+export * from "./manual.ts";

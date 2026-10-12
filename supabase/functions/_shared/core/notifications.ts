@@ -8,8 +8,13 @@ export interface PushMessage {
   title: string;
   body: string;
   /** o app abre esta rota ao tocar */
-  data: { type: "budget" | "import"; route: string; month?: string; categoryId?: number };
+  data: { type: "budget" | "import" | "manual"; route: string; month?: string; categoryId?: number; txId?: string };
+  /** categoria de notificação (botões de ação) registrada no app */
+  categoryIdentifier?: string;
 }
+
+/** Identificador da categoria de notificação com botões para classificar na hora. */
+export const CATEGORIZE_ACTIONS_ID = "categorize";
 
 export function budgetAlertMessage(a: BudgetAlert): PushMessage {
   const s = a.status;
@@ -35,5 +40,15 @@ export function importMessage(p: { byName: string; month: string; count: number;
     title: `${p.byName} confirmou a fatura de ${formatMonthShort(p.month)}`,
     body: `${p.count} lançamentos.${review}`,
     data: { type: "import", route: p.reviewCount > 0 ? "/revisar" : "/", month: p.month },
+  };
+}
+
+export function manualEntryMessage(p: { byName: string; amountCents: number; description: string; categoryId: number | null; needsReview: boolean; month: string; txId: string }): PushMessage {
+  const cat = p.needsReview ? "sem categoria" : categoryName(p.categoryId);
+  return {
+    title: `${p.byName} lançou ${formatBRL(p.amountCents)}`,
+    body: p.needsReview ? `${p.description} — ${cat}. Escolha uma categoria nos botões abaixo.` : `${p.description} — ${cat}.`,
+    data: { type: "manual", route: p.needsReview ? "/revisar" : "/", month: p.month, txId: p.txId },
+    categoryIdentifier: p.needsReview ? CATEGORIZE_ACTIONS_ID : undefined,
   };
 }
