@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Modal, Pressable, TextInput, View } from "react-native";
-import { CATEGORIES, budgetStatuses, formatBRL, formatMonthLong, formatNumberBR, tryParseBRL, type BudgetStatus } from "@financas/core";
+import { CATEGORIES, budgetStatuses, formatMonthLong, formatNumberBR, tryParseBRL, type BudgetStatus } from "@financas/core";
 import { Badge, Body, Button, Card, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, monthsOf, useAnalysis } from "@/lib/analysis";
 import { saveBudget } from "@/lib/mutations";
 import { useReady } from "@/lib/session";
 import { categoryColor, radius, space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 const LEVEL = {
   ok: { label: "No caminho", tone: "good" as const },

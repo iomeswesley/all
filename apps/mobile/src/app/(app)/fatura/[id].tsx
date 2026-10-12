@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import { useMemo, useState } from "react";
 import { Alert, Modal, TextInput, View } from "react-native";
-import { formatBRL, formatBrDate, formatMonthLong, parseBrDate, reconcile, sha256Hex, statementMonthKey, tryParseBRL, type ReconcileCheck } from "@financas/core";
+import { formatBrDate, formatMonthLong, parseBrDate, reconcile, sha256Hex, statementMonthKey, tryParseBRL, type ReconcileCheck } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { TxItem } from "@/components/TxItem";
 import { Badge, Banner, Body, Button, Card, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
@@ -11,6 +11,7 @@ import { applyCategory, confirmStatement, declaredOf, discardStatement, fetchHid
 import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { radius, space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 const SECTIONS: { key: string; title: string; test: (t: TxFull) => boolean }[] = [
   { key: "parcelas", title: "Parcelas", test: (t) => t.kind === "parcela" },

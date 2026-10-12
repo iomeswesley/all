@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Share, View } from "react-native";
-import { buildCheckin, categoryName, formatBRL, formatMonthLong, formatMonthShort, addMonthsToKey, statementMonthKey } from "@financas/core";
+import { buildCheckin, categoryName, formatMonthLong, formatMonthShort, addMonthsToKey, statementMonthKey } from "@financas/core";
 import { Badge, Banner, Body, Button, Card, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, monthsOf, useAnalysis } from "@/lib/analysis";
 import { space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 export default function Checkin() {
   const t = useTheme();

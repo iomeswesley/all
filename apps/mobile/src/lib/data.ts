@@ -1,6 +1,7 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { hiddenTotalsToTx, type AnalyticsTx, type BudgetRow, type HiddenTotal, type RecurringTx } from "@financas/core";
+import { usePrefs } from "./prefs";
 import { supabase } from "./supabase";
 
 /** O PostgREST devolve no máximo 1000 linhas por chamada: pagina até acabar. */
@@ -17,6 +18,7 @@ export async function fetchAll<T>(build: (from: number, to: number) => PromiseLi
 
 /** Carrega ao focar a tela e permite recarregar manualmente. */
 export function useLoad<T>(loader: () => Promise<T>, deps: unknown[] = []) {
+  usePrefs(); // redesenha a tela ao alternar o modo privacidade
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,15 +51,20 @@ export interface TxRow extends AnalyticsTx, RecurringTx {
   installmentTotal: number | null;
   needsReview: boolean;
   cardLast4: string | null;
+  fxRate: number | null;
+  taxDeductible: boolean;
+  taxKind: "saude" | "educacao" | "outros" | null;
+  attachmentPath: string | null;
 }
 
 const VIEW_COLUMNS =
-  "id, statement_id, statement_month, posted_on, description_raw, description_clean, merchant_name, amount_cents, amount_usd_cents, category_id, kind, owner_user_id, is_private, installment_n, installment_total, needs_review, card_last4";
+  "id, statement_id, statement_month, posted_on, description_raw, description_clean, merchant_name, amount_cents, amount_usd_cents, category_id, kind, owner_user_id, is_private, installment_n, installment_total, needs_review, card_last4, fx_rate, tax_deductible, tax_kind, attachment_path";
 
 interface ViewRow {
   id: string; statement_id: string; statement_month: string; posted_on: string; description_raw: string; description_clean: string;
   merchant_name: string | null; amount_cents: number; amount_usd_cents: number | null; category_id: number | null; kind: TxRow["kind"];
   owner_user_id: string | null; is_private: boolean; installment_n: number | null; installment_total: number | null; needs_review: boolean; card_last4: string | null;
+  fx_rate: number | null; tax_deductible: boolean; tax_kind: TxRow["taxKind"]; attachment_path: string | null;
 }
 
 export const toTxRow = (r: ViewRow): TxRow => ({
@@ -78,6 +85,10 @@ export const toTxRow = (r: ViewRow): TxRow => ({
   installmentTotal: r.installment_total,
   needsReview: r.needs_review,
   cardLast4: r.card_last4,
+  fxRate: r.fx_rate === null ? null : Number(r.fx_rate),
+  taxDeductible: Boolean(r.tax_deductible),
+  taxKind: r.tax_kind ?? null,
+  attachmentPath: r.attachment_path ?? null,
 });
 
 /** Lançamentos das faturas confirmadas (competência = mês do vencimento). */
@@ -107,6 +118,7 @@ export interface StatementRow {
   forced_diff_cents: number | null;
   minimum_payment_cents: number | null;
   credit_limit_cents: number | null;
+  available_limit_cents: number | null;
   best_purchase_date: string | null;
   annuity_cents: number | null;
   annuity_paid_cents: number | null;
@@ -116,7 +128,7 @@ export interface StatementRow {
 }
 
 export const STATEMENT_COLUMNS =
-  "id, status, closing_date, due_date, declared_total_cents, declared_previous_balance_cents, declared_payments_cents, declared_credits_cents, declared_expenses_cents, declared_expenses_usd_cents, declared_future_cents, computed_total_cents, computed_future_cents, reconcile_status, reconcile_checks, forced_diff_cents, minimum_payment_cents, credit_limit_cents, best_purchase_date, annuity_cents, annuity_paid_cents, annuity_discount_percent, file_path, account_id";
+  "id, status, closing_date, due_date, declared_total_cents, declared_previous_balance_cents, declared_payments_cents, declared_credits_cents, declared_expenses_cents, declared_expenses_usd_cents, declared_future_cents, computed_total_cents, computed_future_cents, reconcile_status, reconcile_checks, forced_diff_cents, minimum_payment_cents, credit_limit_cents, available_limit_cents, best_purchase_date, annuity_cents, annuity_paid_cents, annuity_discount_percent, file_path, account_id";
 
 export async function fetchStatements(): Promise<StatementRow[]> {
   const { data, error } = await supabase.from("statements").select(STATEMENT_COLUMNS).order("due_date", { ascending: false });
@@ -150,6 +162,10 @@ export async function fetchDashboardTransactions(nameOf: (userId: string) => str
     installmentTotal: null,
     needsReview: false,
     cardLast4: null,
+    fxRate: null,
+    taxDeductible: false,
+    taxKind: null,
+    attachmentPath: null,
   }));
   return [...rows, ...synthetic];
 }

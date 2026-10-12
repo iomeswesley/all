@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { View } from "react-native";
-import { categoryName, detectRecurring, formatBRL, formatMonthShort, type RecurringAlert } from "@financas/core";
+import { categoryName, detectRecurring, formatMonthShort, type RecurringAlert } from "@financas/core";
 import { Badge, Body, Card, Empty, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { fetchConfirmedTransactions, useLoad } from "@/lib/data";
 import { space } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 const ALERT: Record<RecurringAlert, { label: string; tone: "warn" | "bad" | "neutral" }> = {
   duplicada: { label: "Cobrança duplicada", tone: "bad" },

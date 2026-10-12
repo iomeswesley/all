@@ -1,7 +1,8 @@
 import { Pressable, Text, View } from "react-native";
-import { categoryName, formatBrDayMonth, formatUSD } from "@financas/core";
+import { categoryName, formatBrDayMonth } from "@financas/core";
 import { categoryColor, space, useTheme } from "@/lib/theme";
 import { Body, Money, Small } from "./ui";
+import { formatUSD } from "@/lib/format";
 
 export interface TxItemData {
   id: string;

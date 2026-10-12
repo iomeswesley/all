@@ -2,7 +2,8 @@ import * as Haptics from "expo-haptics";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { formatBRL } from "@financas/core";
+import { formatBRL } from "@/lib/format";
+
 import { radius, space, useTheme } from "@/lib/theme";
 
 export function Screen({ children, onRefresh, refreshing = false, scroll = true, padded = true }: {

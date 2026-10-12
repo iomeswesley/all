@@ -17,6 +17,12 @@ export default function AppLayout() {
       <Stack.Screen name="orcamento" options={{ title: "Orçamento" }} />
       <Stack.Screen name="checkin" options={{ title: "Check-in do mês" }} />
       <Stack.Screen name="encargos" options={{ title: "Encargos" }} />
+      <Stack.Screen name="habitos" options={{ title: "Custo do hábito" }} />
+      <Stack.Screen name="ir" options={{ title: "Imposto de renda" }} />
+      <Stack.Screen name="fluxo" options={{ title: "Fluxo de caixa" }} />
+      <Stack.Screen name="metas" options={{ title: "Metas" }} />
+      <Stack.Screen name="perguntas" options={{ title: "Pergunte aos dados" }} />
+      <Stack.Screen name="cartao" options={{ title: "Monitor do cartão" }} />
     </Stack>
   );
 }

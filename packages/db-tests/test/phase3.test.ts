@@ -32,6 +32,12 @@ describe("IR: dedutível, tipo e comprovante", () => {
     expect(await rejects(asUser(db, ana, () => q("update public.transactions set tax_kind = 'luxo' where id = $1", [txA])))).toBe(true);
     expect(await rejects(asUser(db, ana, () => q("update public.transactions set attachment_path = $2 where id = $1", [txA, `${hB}/roubado.jpg`])), "attachment_in_household")).toBe(true);
   });
+  it("a view do painel enxerga as colunas de IR depois que a fatura é confirmada", async () => {
+    await asUser(db, ana, () => q("select public.confirm_statement($1)", [stA]));
+    const [row] = await asUser(db, bia, () => q("select tax_deductible, tax_kind, attachment_path, statement_month from public.v_transactions where id = $1", [txA]));
+    expect(row).toEqual({ tax_deductible: true, tax_kind: "saude", attachment_path: `${hA}/${txA}.jpg`, statement_month: "2026-09" });
+  });
+
   it("o outro casal não marca nem enxerga", async () => {
     const upd = await asUser(db, carlos, () => db.query("update public.transactions set tax_deductible = false where id = $1", [txA]));
     expect(upd.affectedRows).toBe(0);

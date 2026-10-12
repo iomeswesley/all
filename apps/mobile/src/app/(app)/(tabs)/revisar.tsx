@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { View } from "react-native";
-import { categoryName, decodeDescription, formatBRL, formatBrDayMonth, merchantKey, CAT } from "@financas/core";
+import { categoryName, decodeDescription, formatBrDayMonth, merchantKey, CAT } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { Body, Card, Chip, Empty, ErrorText, H1, Loading, Money, Screen, Small } from "@/components/ui";
 import { fetchAll, useLoad } from "@/lib/data";
@@ -8,6 +8,7 @@ import { applyCategory, applyToIds, setPrivate } from "@/lib/mutations";
 import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { categoryColor, space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 interface Pending { id: string; description_raw: string; description_clean: string; amount_cents: number; posted_on: string; category_id: number | null }
 interface Group { key: string; label: string; items: Pending[]; totalCents: number }

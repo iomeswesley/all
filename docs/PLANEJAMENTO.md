@@ -368,3 +368,11 @@ Cada commit mantém `pnpm test` verde. Ao fim da fase: lista de pendências e ri
 - **Push**: tokens do Expo em `push_tokens`; envio por Edge Function `notify` (JWT do usuário). Android remoto exige *development build* (Expo Go não recebe push desde o SDK 53); iOS exige conta Apple Developer. Sem isso o app funciona normalmente, com avisos dentro do app.
 - **Gasto pessoal**: `is_private` + dono; a RLS já esconde as linhas do parceiro. O parceiro enxerga apenas totais por categoria/mês via `partner_private_totals()` e a conferência da fatura é ajustada com `statement_hidden_sums()`.
 - **Check-in e recomendações**: regras determinísticas com estimativa de economia (sem IA).
+
+## 15. Fase 3 — decisões
+
+- **Chat em linguagem natural → perguntas por regras** (sem IA, por escolha do projeto): parser pt-BR local; só dados do casal; admite quando não entende.
+- **Consentimento do Open Finance:** não se aplica; substituído por monitor de cartão (melhor dia, anuidade, dólar/IOF).
+- **IR:** dedução sempre decidida pela pessoa; sugestões excluem farmácia/academia/livros; educação limitada por pessoa (configurável).
+- **Privacidade:** máscara global de valores (`lib/format.ts`) + redesenho por `usePrefs()`.
+- **View do painel recriada** na migration da fase 3 (`t.*` não acompanha colunas novas).

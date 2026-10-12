@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { View } from "react-native";
-import { avoidableCharges, formatBRL, formatMonthLong, statementMonthKey } from "@financas/core";
+import { avoidableCharges, formatMonthLong, statementMonthKey } from "@financas/core";
 import { Badge, Body, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { monthsOf, useAnalysis } from "@/lib/analysis";
 import { space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 const LABELS: Record<string, string> = { anuidade: "Anuidade", iof: "IOF", juros: "Juros", multa: "Multa", mora: "Mora", seguro: "Seguros", tarifa: "Tarifas" };
 

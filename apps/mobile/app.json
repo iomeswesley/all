@@ -28,6 +28,13 @@
         {
           "color": "#2a78d6"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Para anexar a nota fiscal ao lançamento.",
+          "cameraPermission": "Para fotografar a nota fiscal."
+        }
       ]
     ]
   }

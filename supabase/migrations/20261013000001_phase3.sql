@@ -44,3 +44,15 @@ create policy receipts_insert on storage.objects for insert to authenticated
   with check (bucket_id = 'receipts' and public.is_member(public.path_household(name)));
 create policy receipts_delete on storage.objects for delete to authenticated
   using (bucket_id = 'receipts' and public.is_member(public.path_household(name)));
+
+-- `t.*` é expandido na criação da view: recria para incluir tax_kind (e qualquer coluna futura).
+drop view public.v_transactions;
+create view public.v_transactions with (security_invoker = true) as
+select
+  t.*,
+  to_char(s.due_date, 'YYYY-MM') as statement_month,
+  s.due_date                     as statement_due_date
+from public.transactions t
+join public.statements s on s.id = t.statement_id
+where s.status = 'confirmed';
+grant select on public.v_transactions to authenticated;

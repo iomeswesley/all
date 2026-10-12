@@ -17,7 +17,7 @@ No terminal, na raiz do repositório:
 pnpm install
 npx supabase login
 npx supabase link --project-ref SEU-PROJECT-REF   # o "xxxx" da URL
-npx supabase db push                               # aplica supabase/migrations/*
+npx supabase db push                               # aplica supabase/migrations/* (todas as fases)
 ```
 
 Isso cria as tabelas (valores em centavos), as regras de acesso por casal (RLS), o bucket privado `statements`, as 12 categorias e o dicionário inicial de estabelecimentos.

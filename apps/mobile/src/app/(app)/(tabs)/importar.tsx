@@ -3,12 +3,13 @@ import { randomUUID } from "expo-crypto";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Modal, Pressable, TextInput, View } from "react-native";
-import { formatBRL, formatBrDate, formatMonthLong, statementMonthKey } from "@financas/core";
+import { formatBrDate, formatMonthLong, statementMonthKey } from "@financas/core";
 import { Badge, Body, Button, Card, Empty, ErrorText, H1, Loading, Row, Screen, SectionTitle, Small } from "@/components/ui";
 import { fetchStatements, useLoad } from "@/lib/data";
 import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { radius, space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 interface ImportResponse {
   status?: "ok" | "duplicate_file" | "already_confirmed" | "unsupported";

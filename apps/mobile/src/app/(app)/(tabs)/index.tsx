@@ -2,14 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import {
-  addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBRL, formatMonthLong, formatMonthShort, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, type Change,
-} from "@financas/core";
+import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatMonthLong, formatMonthShort, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, type Change } from "@financas/core";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { Badge, Body, Button, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, useAnalysis } from "@/lib/analysis";
+import { usePrefs } from "@/lib/prefs";
 import { useReady } from "@/lib/session";
 import { space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 export default function Inicio() {
   const t = useTheme();
@@ -18,6 +18,7 @@ export default function Inicio() {
   const { data: analysis, error, loading, reload } = useAnalysis();
   const data = analysis?.txs ?? null;
   const [picked, setPicked] = useState<string | null>(null);
+  const { privacy, setPrivacy } = usePrefs();
 
   const view = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -49,7 +50,12 @@ export default function Inicio() {
 
   return (
     <Screen onRefresh={reload} refreshing={loading}>
-      <H1>{householdName}</H1>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <H1>{householdName}</H1>
+        <Pressable accessibilityRole="button" accessibilityLabel={privacy ? "Mostrar valores" : "Esconder valores"} hitSlop={12} onPress={() => setPrivacy(!privacy)}>
+          <Ionicons name={privacy ? "eye-off-outline" : "eye-outline"} size={26} color={t.textSecondary} />
+        </Pressable>
+      </View>
       {error ? <ErrorText message={error} /> : null}
 
       {!view ? (

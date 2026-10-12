@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Text, View } from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
-import { categoryName, formatBRL, formatMonthShort, percent, type CategoryTotal, type MonthlyCategorySeries } from "@financas/core";
+import { categoryName, formatMonthShort, percent, type CategoryTotal, type MonthlyCategorySeries } from "@financas/core";
+import { privacyOn } from "@/lib/prefs";
 import { categoryColor, isFoldedCategory, space, STACK_ORDER, useTheme } from "@/lib/theme";
 import { Body, Small } from "./ui";
+import { formatBRL } from "@/lib/format";
 
 const compactBRL = (reais: number) => (reais >= 1000 ? `${(reais / 1000).toFixed(reais >= 10000 ? 0 : 1).replace(".", ",")} mil` : String(Math.round(reais)));
 
@@ -121,7 +123,8 @@ export function MonthlyStackedBars({ series, selectedMonth, onSelect }: { series
         yAxisTextStyle={{ color: t.textMuted, fontSize: 10 }}
         xAxisLabelTextStyle={{ color: t.textMuted, fontSize: 10 }}
         yAxisLabelWidth={42}
-        formatYLabel={(l) => compactBRL(Number(l))}
+        hideYAxisText={privacyOn}
+        formatYLabel={(l) => (privacyOn ? "" : compactBRL(Number(l)))}
         scrollToEnd
         disableScroll={false}
       />

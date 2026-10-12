@@ -1,5 +1,6 @@
 import { useColorScheme } from "react-native";
 import { CAT } from "@financas/core";
+import { usePrefs } from "./prefs";
 
 /** Tokens de cor. Paleta categórica validada (8 matizes, claro/escuro) + superfícies neutras. */
 export interface Theme {
@@ -54,8 +55,11 @@ const dark: Theme = {
   other: "#6f6e68",
 };
 
+/** Tema: escolha da pessoa (claro/escuro) ou o do sistema. Assinar as preferências também redesenha os valores ao alternar a privacidade. */
 export function useTheme(): Theme {
-  return useColorScheme() === "dark" ? dark : light;
+  const system = useColorScheme();
+  const { theme } = usePrefs();
+  return (theme === "system" ? system : theme) === "dark" ? dark : light;
 }
 
 /**

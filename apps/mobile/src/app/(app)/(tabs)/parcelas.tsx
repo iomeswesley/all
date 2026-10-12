@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
-import { formatBRL, formatMonthLong, formatMonthShort, futureInstallmentTimeline, statementMonthKey } from "@financas/core";
+import { formatMonthLong, formatMonthShort, futureInstallmentTimeline, statementMonthKey } from "@financas/core";
 import { HBars } from "@/components/charts";
 import { Badge, Banner, Body, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { fetchConfirmedTransactions, fetchStatements, useLoad } from "@/lib/data";
 import { space, useTheme } from "@/lib/theme";
+import { formatBRL } from "@/lib/format";
 
 export default function Parcelas() {
   const t = useTheme();
