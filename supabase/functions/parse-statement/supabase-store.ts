@@ -27,11 +27,12 @@ export function supabaseStore(db: SupabaseClient): Store {
       check(await db.from("statements").delete().eq("id", id), "delete statement");
     },
     async account(householdId, accountId) {
-      let q = db.from("accounts").select("id").eq("household_id", householdId).eq("kind", "credit_card").order("created_at").limit(1);
-      if (accountId) q = db.from("accounts").select("id").eq("household_id", householdId).eq("id", accountId).limit(1);
+      // cartão de crédito primeiro; a conta "Pix e dinheiro" (manual) nunca recebe importação
+      let q = db.from("accounts").select("id, kind").eq("household_id", householdId).neq("institution", "manual").order("kind").order("created_at").limit(1);
+      if (accountId) q = db.from("accounts").select("id, kind").eq("household_id", householdId).eq("id", accountId).neq("institution", "manual").limit(1);
       const rows = check(await q, "accounts");
-      if (!rows?.length) throw new Error("Conta de cartão não encontrada.");
-      return { id: rows[0]!.id as string };
+      if (!rows?.length) throw new Error("Conta não encontrada.");
+      return { id: rows[0]!.id as string, kind: rows[0]!.kind as "credit_card" | "checking" };
     },
     async cardOwners(accountId) {
       const rows = check(await db.from("account_cards").select("last4,holder_user_id").eq("account_id", accountId), "account_cards") ?? [];
@@ -64,6 +65,14 @@ export function supabaseStore(db: SupabaseClient): Store {
         householdMerchants: all.filter((m) => m.household_id !== null).map(toMerchant),
         globalMerchants: all.filter((m) => m.household_id === null).map(toMerchant),
       };
+    },
+    async existingHashes(householdId, hashes) {
+      const found = new Set<string>();
+      for (let i = 0; i < hashes.length; i += 150) {
+        const rows = check(await db.from("transactions").select("dedupe_hash").eq("household_id", householdId).in("dedupe_hash", hashes.slice(i, i + 150)), "transactions");
+        for (const r of rows ?? []) found.add(r.dedupe_hash as string);
+      }
+      return found;
     },
     async insertStatement(row) {
       const res = await db.from("statements").insert(row).select("id").single();

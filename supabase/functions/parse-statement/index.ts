@@ -1,10 +1,11 @@
-// Edge Function: lê uma fatura Santander (PDF no bucket privado) e grava um rascunho para conferência.
+// Edge Function: lê uma fatura/extrato (PDF Santander, OFX ou JSON assistido, no bucket privado) e grava um rascunho para conferência.
 // Roda com o JWT do usuário: nenhuma chave de serviço, e a RLS vale para tudo.
 //
-// POST { path: "<household_id>/<arquivo>.pdf", accountId?: string, password?: string }
+// POST { path: "<household_id>/<arquivo>.(pdf|ofx|json)", accountId?: string, password?: string }
 import { createClient } from "@supabase/supabase-js";
 import { getDocumentProxy } from "unpdf";
 import { itemsFromPdfDocument } from "../_shared/core/pdf/items.ts";
+import { decodeOfxBytes, detectFormatFromName, type ImportSource } from "../_shared/core/parsers/index.ts";
 import { processStatement } from "./process.ts";
 import { supabaseStore } from "./supabase-store.ts";
 
@@ -40,7 +41,8 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "invalid_json" }, 400);
   }
-  if (!body.path || !/^[0-9a-f-]{36}\/[\w.-]+\.pdf$/i.test(body.path)) return json({ error: "invalid_path" }, 400);
+  const format = body.path ? detectFormatFromName(body.path) : null;
+  if (!body.path || !format || !/^[0-9a-f-]{36}\/[\w.-]+\.(pdf|ofx|qfx|json|txt)$/i.test(body.path)) return json({ error: "invalid_path" }, 400);
 
   const store = supabaseStore(db);
   try {
@@ -52,17 +54,23 @@ Deno.serve(async (req) => {
     const bytes = new Uint8Array(await file.data.arrayBuffer());
     const sha256 = await sha256Hex(bytes);
 
-    let items;
-    try {
-      const pdf = await getDocumentProxy(bytes.slice(), body.password ? { password: body.password } : undefined);
-      items = await itemsFromPdfDocument(pdf);
-    } catch (e) {
-      const name = (e as { name?: string }).name;
-      if (name === "PasswordException") return json({ error: body.password ? "wrong_password" : "password_required" }, 422);
-      return json({ error: "unreadable_pdf", message: "Não consegui abrir o PDF." }, 422);
+    let source: ImportSource;
+    if (format === "pdf") {
+      try {
+        const pdf = await getDocumentProxy(bytes.slice(), body.password ? { password: body.password } : undefined);
+        source = { format: "pdf", items: await itemsFromPdfDocument(pdf) };
+      } catch (e) {
+        const name = (e as { name?: string }).name;
+        if (name === "PasswordException") return json({ error: body.password ? "wrong_password" : "password_required" }, 422);
+        return json({ error: "unreadable_pdf", message: "Não consegui abrir o PDF." }, 422);
+      }
+    } else if (format === "ofx") {
+      source = { format: "ofx", text: decodeOfxBytes(bytes) };
+    } else {
+      source = { format: "json", text: new TextDecoder().decode(bytes) };
     }
 
-    const result = await processStatement(store, { items, sha256, filePath: body.path, userId: userData.user.id, accountId: body.accountId });
+    const result = await processStatement(store, { source, sha256, filePath: body.path, userId: userData.user.id, accountId: body.accountId });
     return json(result, result.status === "unsupported" ? 422 : 200);
   } catch (e) {
     console.error("parse-statement", (e as Error).message); // sem dados da fatura nos logs

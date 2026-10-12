@@ -3,27 +3,28 @@
 import { buildDraft } from "../_shared/core/draft.ts";
 import type { CategorizeContext } from "../_shared/core/categorize.ts";
 import type { ReconcileResult } from "../_shared/core/reconcile.ts";
-import { parseSantanderStatement } from "../_shared/core/parsers/santander/index.ts";
+import { parseImport, type ImportSource } from "../_shared/core/parsers/index.ts";
 import { StatementParseError, type PdfTextItem } from "../_shared/core/parsers/types.ts";
 
 export interface StatementRow {
   household_id: string;
   account_id: string;
   status: "needs_review";
+  format: "santander_pdf" | "ofx" | "json";
   closing_date: string;
   due_date: string;
   period_start: string | null;
   product: string | null;
   declared_total_cents: number;
-  declared_previous_balance_cents: number;
-  declared_payments_cents: number;
-  declared_credits_cents: number;
-  declared_expenses_cents: number;
-  declared_expenses_usd_cents: number;
+  declared_previous_balance_cents: number | null;
+  declared_payments_cents: number | null;
+  declared_credits_cents: number | null;
+  declared_expenses_cents: number | null;
+  declared_expenses_usd_cents: number | null;
   declared_future_cents: number | null;
   computed_total_cents: number;
   computed_future_cents: number;
-  reconcile_status: "ok" | "rounding" | "fail";
+  reconcile_status: "ok" | "rounding" | "fail" | "unverified";
   reconcile_checks: unknown;
   minimum_payment_cents: number | null;
   credit_limit_cents: number | null;
@@ -70,16 +71,21 @@ export interface Store {
   findStatementByDue(householdId: string, accountId: string, dueDate: string): Promise<{ id: string; status: string } | null>;
   deleteStatement(id: string): Promise<void>;
   /** Conta do cartão: a pedida ou a primeira conta de cartão do casal. */
-  account(householdId: string, accountId?: string): Promise<{ id: string }>;
+  account(householdId: string, accountId?: string): Promise<{ id: string; kind: "credit_card" | "checking" }>;
   cardOwners(accountId: string): Promise<Record<string, string | null>>;
   categorizeContext(householdId: string): Promise<CategorizeContext>;
+  /** Quais destes hashes já existem no casal (lançamentos de outras faturas): para ignorar sobreposição de períodos. */
+  existingHashes(householdId: string, hashes: string[]): Promise<Set<string>>;
   insertStatement(row: StatementRow): Promise<string>;
   insertTransactions(rows: TransactionRow[]): Promise<void>;
   upsertCards(rows: { account_id: string; household_id: string; last4: string; label: string | null }[]): Promise<void>;
 }
 
 export interface ProcessInput {
-  items: PdfTextItem[];
+  /** o que foi lido do arquivo (PDF → itens de texto; OFX/JSON → texto) */
+  source?: ImportSource;
+  /** atalho legado: itens de PDF */
+  items?: PdfTextItem[];
   sha256: string;
   filePath: string;
   userId: string;
@@ -87,7 +93,9 @@ export interface ProcessInput {
 }
 
 export type ProcessResult =
-  | { status: "ok"; statementId: string; reconcile: ReconcileResult; reviewCount: number; transactionCount: number; warnings: string[]; replacedDraft: boolean }
+  | { status: "ok"; statementId: string; reconcile: ReconcileResult; reviewCount: number; transactionCount: number; warnings: string[]; replacedDraft: boolean; skippedDuplicates: number }
+  | { status: "nothing_new"; skippedDuplicates: number }
+  | { status: "overlap_with_total"; skippedDuplicates: number; message: string }
   | { status: "duplicate_file"; statementId: string; confirmed: boolean }
   | { status: "already_confirmed"; statementId: string }
   | { status: "unsupported"; message: string };
@@ -98,15 +106,18 @@ export async function processStatement(store: Store, input: ProcessInput): Promi
   const sameFile = await store.findStatementBySha(householdId, input.sha256);
   if (sameFile) return { status: "duplicate_file", statementId: sameFile.id, confirmed: sameFile.status === "confirmed" };
 
+  // a conta é lida antes: só leitura, e o tipo dela ajuda a interpretar o OFX
+  const account = await store.account(householdId, input.accountId);
+
   let parsed;
   try {
-    parsed = parseSantanderStatement(input.items);
+    const source: ImportSource = input.source ?? { format: "pdf", items: input.items ?? [] };
+    parsed = parseImport(source.format === "ofx" ? { ...source, options: { accountKind: account.kind } } : source);
   } catch (e) {
     if (e instanceof StatementParseError) return { status: "unsupported", message: e.message };
     throw e;
   }
 
-  const account = await store.account(householdId, input.accountId);
   const samePeriod = await store.findStatementByDue(householdId, account.id, parsed.dueDate);
   if (samePeriod?.status === "confirmed") return { status: "already_confirmed", statementId: samePeriod.id };
   if (samePeriod) await store.deleteStatement(samePeriod.id); // rascunho anterior: substitui
@@ -117,6 +128,20 @@ export async function processStatement(store: Store, input: ProcessInput): Promi
     categorizeContext: await store.categorizeContext(householdId),
   });
 
+  // Extratos (OFX/JSON) de períodos que se cruzam trazem lançamentos já importados: ignora os repetidos.
+  // Fatura Santander em PDF não se sobrepõe (uma por fechamento); com total declarado não dá para ignorar linhas sem quebrar a conferência.
+  let rows = draft.transactions;
+  let skipped = 0;
+  if (parsed.format !== "santander_pdf") {
+    const existing = await store.existingHashes(householdId, rows.map((t) => t.dedupeHash));
+    skipped = rows.filter((t) => existing.has(t.dedupeHash)).length;
+    if (skipped > 0 && parsed.hasDeclaredTotals) {
+      return { status: "overlap_with_total", skippedDuplicates: skipped, message: `${skipped} lançamento(s) deste arquivo já foram importados antes. Como ele traz um total para conferir, importe só o período novo.` };
+    }
+    rows = rows.filter((t) => !existing.has(t.dedupeHash));
+    if (rows.length === 0) return { status: "nothing_new", skippedDuplicates: skipped };
+  }
+
   await store.upsertCards(parsed.cards.map((c) => ({ account_id: account.id, household_id: householdId, last4: c.last4, label: null })));
 
   const s = draft.statement;
@@ -124,6 +149,7 @@ export async function processStatement(store: Store, input: ProcessInput): Promi
     household_id: householdId,
     account_id: account.id,
     status: "needs_review",
+    format: s.format,
     closing_date: s.closingDate,
     due_date: s.dueDate,
     period_start: s.periodStart,
@@ -153,7 +179,7 @@ export async function processStatement(store: Store, input: ProcessInput): Promi
 
   try {
     await store.insertTransactions(
-      draft.transactions.map((t) => ({
+      rows.map((t) => ({
         household_id: householdId,
         account_id: account.id,
         statement_id: statementId,
@@ -189,8 +215,9 @@ export async function processStatement(store: Store, input: ProcessInput): Promi
     statementId,
     reconcile: draft.reconcile,
     reviewCount: draft.reviewCount,
-    transactionCount: draft.transactions.length,
-    warnings: draft.warnings,
+    transactionCount: rows.length,
+    warnings: skipped > 0 ? [...draft.warnings, `${skipped} lançamento(s) já importado(s) antes foram ignorados.`] : draft.warnings,
     replacedDraft: samePeriod !== null,
+    skippedDuplicates: skipped,
   };
 }
