@@ -34,3 +34,5 @@ Este ambiente não tem celular, projeto Supabase nem Deno. Portanto **não foram
 
 
 > **Atualização:** a tela de regras, o lançamento manual (Pix/dinheiro), os botões de categoria na notificação e o acabamento (ícone, splash, contraste, lint) foram feitos depois — veja [COMPLEMENTOS.md](COMPLEMENTOS.md).
+
+> **Atualização 2:** contas/bancos (OFX e JSON), eliminação/exportação de dados e o editor do limite de educação foram feitos — veja [CONTAS-E-DADOS.md](CONTAS-E-DADOS.md). Segue pendente: CSV e leitores de PDF de outros bancos (precisam de exemplos reais).

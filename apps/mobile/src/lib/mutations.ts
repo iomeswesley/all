@@ -1,4 +1,4 @@
-import { reconcile, ruleFromCorrection, ruleMatchesDescription, type DeclaredTotals, type HiddenSums, type ReconTx, type Rule } from "@financas/core";
+import { reconcile, reconcileGeneric, ruleFromCorrection, ruleMatchesDescription, type DeclaredTotals, type HiddenSums, type ReconcileResult, type ReconTx, type Rule } from "@financas/core";
 import { fetchAll } from "./data";
 import { supabase } from "./supabase";
 import type { StatementRow } from "./data";
@@ -64,8 +64,19 @@ export async function fetchHiddenSums(statementId: string): Promise<HiddenSums> 
   };
 }
 
+/** Conferência pelo formato de origem: fatura Santander tem resumo completo; OFX/JSON só um total (ou nenhum). */
+export function reconcileStatement(statement: StatementRow, txs: readonly ReconTx[], hidden?: HiddenSums): ReconcileResult {
+  if (statement.format !== "santander_pdf") {
+    const declared = statement.declared_expenses_cents === null ? null : Number(statement.declared_expenses_cents);
+    // gasto pessoal do par que não enxergamos entra como uma linha "avista" só para a soma
+    const extra: ReconTx[] = hidden && hidden.expensesCents !== 0 ? [{ amountCents: hidden.expensesCents, amountUsdCents: null, kind: "avista", section: "despesas", installmentN: null, installmentTotal: null }] : [];
+    return reconcileGeneric(declared, [...txs, ...extra]);
+  }
+  return reconcile(declaredOf(statement), txs, hidden);
+}
+
 export async function refreshReconciliation(statement: StatementRow, txs: readonly TxFull[]) {
-  const result = reconcile(declaredOf(statement), txs, await fetchHiddenSums(statement.id));
+  const result = reconcileStatement(statement, txs, await fetchHiddenSums(statement.id));
   const { error } = await supabase
     .from("statements")
     .update({

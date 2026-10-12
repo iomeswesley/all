@@ -11,7 +11,7 @@ import { space, useTheme } from "@/lib/theme";
 
 type Path =
   | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encargos"
-  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras";
+  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados";
 
 export default function Mais() {
   const t = useTheme();
@@ -63,6 +63,7 @@ export default function Mais() {
       <SectionTitle>Cartão e casal</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         {item("card-outline", "Monitor do cartão", "Melhor dia de compra, serviços em dólar e IOF", "/cartao")}
+        {item("business-outline", "Contas e bancos", "Adicionar cartões e contas de outros bancos", "/contas")}
         {item("swap-horizontal-outline", "Cartões e donos", "De quem é cada cartão (meu / dela / nosso)", "/cartoes")}
         {item("git-branch-outline", "Regras", "O que o app aprendeu com suas correções", "/regras")}
         {item("people-outline", "Casal", `${householdName} · convidar parceiro(a)`, "/meu-casal", true)}
@@ -92,6 +93,9 @@ export default function Mais() {
         <Small>Mesmo sem notificações, os alertas aparecem no painel e ao confirmar uma fatura.</Small>
       </Card>
 
+      <Card style={{ paddingVertical: 4 }}>
+        {item("shield-checkmark-outline", "Seus dados", "Exportar, sair do casal, excluir casal ou conta", "/seus-dados", true)}
+      </Card>
       <Card>
         <Body style={{ fontWeight: "600" }}>Privacidade dos dados</Body>
         <Small>As faturas ficam num espaço privado do seu casal no Supabase. Guardamos só os 4 últimos dígitos dos cartões. Nenhum dado é enviado a serviços de IA.</Small>

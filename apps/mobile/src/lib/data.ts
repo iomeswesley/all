@@ -110,6 +110,7 @@ export async function fetchConfirmedTransactions(): Promise<TxRow[]> {
 export interface StatementRow {
   id: string;
   status: "needs_review" | "confirmed";
+  format: "santander_pdf" | "ofx" | "json";
   closing_date: string;
   due_date: string;
   declared_total_cents: number;
@@ -121,7 +122,7 @@ export interface StatementRow {
   declared_future_cents: number | null;
   computed_total_cents: number;
   computed_future_cents: number | null;
-  reconcile_status: "ok" | "rounding" | "fail";
+  reconcile_status: "ok" | "rounding" | "fail" | "unverified";
   reconcile_checks: unknown;
   forced_diff_cents: number | null;
   minimum_payment_cents: number | null;
@@ -136,7 +137,7 @@ export interface StatementRow {
 }
 
 export const STATEMENT_COLUMNS =
-  "id, status, closing_date, due_date, declared_total_cents, declared_previous_balance_cents, declared_payments_cents, declared_credits_cents, declared_expenses_cents, declared_expenses_usd_cents, declared_future_cents, computed_total_cents, computed_future_cents, reconcile_status, reconcile_checks, forced_diff_cents, minimum_payment_cents, credit_limit_cents, available_limit_cents, best_purchase_date, annuity_cents, annuity_paid_cents, annuity_discount_percent, file_path, account_id";
+  "id, status, format, closing_date, due_date, declared_total_cents, declared_previous_balance_cents, declared_payments_cents, declared_credits_cents, declared_expenses_cents, declared_expenses_usd_cents, declared_future_cents, computed_total_cents, computed_future_cents, reconcile_status, reconcile_checks, forced_diff_cents, minimum_payment_cents, credit_limit_cents, available_limit_cents, best_purchase_date, annuity_cents, annuity_paid_cents, annuity_discount_percent, file_path, account_id";
 
 export async function fetchStatements(): Promise<StatementRow[]> {
   const { data, error } = await supabase.from("statements").select(STATEMENT_COLUMNS).order("due_date", { ascending: false });

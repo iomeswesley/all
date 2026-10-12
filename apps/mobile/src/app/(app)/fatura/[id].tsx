@@ -2,12 +2,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import { useMemo, useState } from "react";
 import { Alert, Modal, TextInput, View } from "react-native";
-import { formatBrDate, formatMonthLong, parseBrDate, reconcile, sha256Hex, statementMonthKey, tryParseBRL, type ReconcileCheck } from "@financas/core";
+import { formatBrDate, formatMonthLong, parseBrDate, sha256Hex, statementMonthKey, tryParseBRL, type ReconcileCheck } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { TxItem } from "@/components/TxItem";
 import { Badge, Banner, Body, Button, Card, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { STATEMENT_COLUMNS, useLoad, type StatementRow } from "@/lib/data";
-import { applyCategory, confirmStatement, declaredOf, discardStatement, fetchHiddenSums, notifyConfirmed, refreshReconciliation, setPrivate, toTxFull, TX_FULL_COLUMNS, type TxFull } from "@/lib/mutations";
+import { applyCategory, confirmStatement, discardStatement, fetchHiddenSums, notifyConfirmed, reconcileStatement, refreshReconciliation, setPrivate, toTxFull, TX_FULL_COLUMNS, type TxFull } from "@/lib/mutations";
 import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { radius, space, useTheme } from "@/lib/theme";
@@ -18,7 +18,7 @@ const SECTIONS: { key: string; title: string; test: (t: TxFull) => boolean }[] =
   { key: "avista", title: "À vista", test: (t) => t.kind === "avista" },
   { key: "encargos", title: "Encargos e tarifas (IOF, anuidade…)", test: (t) => t.kind === "encargo" },
   { key: "estornos", title: "Estornos e créditos", test: (t) => t.kind === "estorno" },
-  { key: "pagamentos", title: "Pagamentos (fatura anterior)", test: (t) => t.kind === "pagamento" },
+  { key: "pagamentos", title: "Pagamentos e entradas (não contam como gasto)", test: (t) => t.kind === "pagamento" },
 ];
 
 export default function ConferirFatura() {
@@ -43,7 +43,7 @@ export default function ConferirFatura() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const live = useMemo(() => (data ? reconcile(declaredOf(data.statement), data.txs, data.hidden) : null), [data]);
+  const live = useMemo(() => (data ? reconcileStatement(data.statement, data.txs, data.hidden) : null), [data]);
   const ownerLabel = (uid: string | null) => (uid === null ? null : uid === me.user_id ? "meu" : partner?.display_name ?? "dela(e)");
 
   if (loading && !data) return <Screen><Loading /></Screen>;
@@ -107,6 +107,10 @@ export default function ConferirFatura() {
         <Banner tone="good" title="Fatura confirmada">
           <Small>{statement.forced_diff_cents ? `Confirmada com diferença de ${formatBRL(statement.forced_diff_cents)} aceita manualmente.` : "Entra no dashboard e nas projeções."}</Small>
         </Banner>
+      ) : live.status === "unverified" ? (
+        <Banner tone="warn" title="Sem total do banco para conferir">
+          <Small>Este arquivo ({statement.format === "ofx" ? "OFX" : "JSON"}) não traz o total da fatura, então não consigo garantir que a soma bate. Confira os valores e o número de lançamentos antes de confirmar.</Small>
+        </Banner>
       ) : live.status === "ok" ? (
         <Banner tone="good" title="A soma confere">
           <Small>Os lançamentos fecham exatamente com o total da fatura.</Small>
@@ -127,10 +131,10 @@ export default function ConferirFatura() {
 
       <Card>
         <SectionTitle>Conferência</SectionTitle>
-        <Line label="Total da fatura (banco)" cents={statement.declared_total_cents} bold />
+        {live.status === "unverified" ? null : <Line label={statement.format === "santander_pdf" ? "Total da fatura (banco)" : "Total informado"} cents={statement.declared_total_cents} bold />}
         <Line label="Total calculado (lançamentos)" cents={live.computedTotalCents} bold />
         {live.checks.map((c) => <CheckRow key={c.id} check={c} />)}
-        <Small>Total = saldo anterior + lançamentos − pagamentos − créditos. Parcelas futuras = soma de (parcelas restantes × valor) das compras parceladas.</Small>
+        <Small>{statement.format === "santander_pdf" ? "Total = saldo anterior + lançamentos − pagamentos − créditos. Parcelas futuras = soma de (parcelas restantes × valor) das compras parceladas." : "Total = compras − estornos (pagamentos e entradas ficam de fora)."}</Small>
       </Card>
 
       {SECTIONS.map((sec) => {

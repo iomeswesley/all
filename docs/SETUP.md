@@ -38,8 +38,11 @@ O app usa login sem senha com **código de 6 dígitos**. Em **Authentication →
 ```bash
 node scripts/sync-core-to-functions.mjs        # copia o código compartilhado para a função
 npx supabase functions deploy parse-statement
-npx supabase functions deploy notify        # Fase 2: alertas de orçamento e aviso ao par
+npx supabase functions deploy notify        # alertas de orçamento e avisos
+npx supabase functions deploy delete-account # excluir conta e dados
 ```
+
+Ou tudo de uma vez: `scripts/deploy-supabase.sh SEU-PROJECT-REF`.
 
 A função roda **com a sessão do usuário** (sem chave de serviço): a RLS vale para tudo. Os logs não contêm dados da fatura.
 

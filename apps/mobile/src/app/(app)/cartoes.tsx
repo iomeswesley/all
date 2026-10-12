@@ -7,13 +7,17 @@ import { supabase } from "@/lib/supabase";
 import { space } from "@/lib/theme";
 
 interface CardRow { account_id: string; last4: string; holder_user_id: string | null }
+interface Loaded { cards: CardRow[]; accounts: Map<string, string> }
 
 export default function Cartoes() {
   const { me, partner } = useReady();
   const { data, error, loading, reload } = useLoad(async () => {
-    const { data, error } = await supabase.from("account_cards").select("account_id, last4, holder_user_id").order("last4");
-    if (error) throw new Error(error.message);
-    return (data ?? []) as CardRow[];
+    const [cards, accounts] = await Promise.all([
+      supabase.from("account_cards").select("account_id, last4, holder_user_id").order("last4"),
+      supabase.from("accounts").select("id, name"),
+    ]);
+    if (cards.error) throw new Error(cards.error.message);
+    return { cards: (cards.data ?? []) as CardRow[], accounts: new Map((accounts.data ?? []).map((a) => [a.id as string, a.name as string])) } satisfies Loaded;
   });
   const [fail, setFail] = useState<string | null>(null);
 
@@ -39,10 +43,11 @@ export default function Cartoes() {
     <Screen onRefresh={reload} refreshing={loading}>
       <Body muted>Cada cartão aparece na fatura pelos 4 últimos dígitos. Defina de quem é: os lançamentos dele entram como “meu”, “dela(e)” ou “nosso”.</Body>
       {error || fail ? <ErrorText message={(error ?? fail)!} /> : null}
-      {data && data.length === 0 ? <Empty title="Nenhum cartão ainda" hint="Eles aparecem depois da primeira fatura importada." /> : null}
-      {(data ?? []).map((c) => (
+      {data && data.cards.length === 0 ? <Empty title="Nenhum cartão ainda" hint="Eles aparecem depois da primeira fatura importada." /> : null}
+      {(data?.cards ?? []).map((c) => (
         <Card key={`${c.account_id}${c.last4}`}>
           <SectionTitle>Cartão final {c.last4}</SectionTitle>
+          {data && data.accounts.size > 1 ? <Small>{data.accounts.get(c.account_id)}</Small> : null}
           <Small>Dono atual: {label(c.holder_user_id)}</Small>
           <View style={{ flexDirection: "row", gap: space.sm, flexWrap: "wrap" }}>
             <Chip label="Nosso" selected={c.holder_user_id === null} onPress={() => void setHolder(c, null)} />

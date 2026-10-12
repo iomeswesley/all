@@ -1,16 +1,16 @@
 import * as Linking from "expo-linking";
 import { useMemo, useState } from "react";
-import { Alert, Modal, Share, View } from "react-native";
+import { Alert, Modal, Share, TextInput, View } from "react-native";
 import {
-  effectiveDate, suggestTaxKind, taxCandidates, taxCsv, taxReport, formatBrDate, type TaxKind, type TaxTx,
+  EDUCATION_LIMIT_CENTS_DEFAULT, effectiveDate, suggestTaxKind, taxCandidates, taxCsv, taxReport, formatBrDate, tryParseBRL, type TaxKind, type TaxTx,
 } from "@financas/core";
-import { formatBRL } from "@/lib/format";
+import { formatBRL, formatNumberBR } from "@/lib/format";
 import { Badge, Banner, Body, Button, Card, Chip, ErrorText, H1, Loading, Money, Row, Screen, SectionTitle, Small } from "@/components/ui";
 import { useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
-import { attachReceipt, fetchSettings, pickReceipt, receiptUrl, removeReceipt, updateTax } from "@/lib/phase3";
+import { attachReceipt, fetchSettings, pickReceipt, receiptUrl, removeReceipt, saveSettings, updateTax } from "@/lib/phase3";
 import { useReady } from "@/lib/session";
-import { space } from "@/lib/theme";
+import { radius, space, useTheme } from "@/lib/theme";
 
 const KIND_LABEL: Record<TaxKind, string> = { saude: "Saúde", educacao: "Educação", outros: "Outros" };
 
@@ -24,6 +24,8 @@ export default function ImpostoDeRenda() {
   const [editing, setEditing] = useState<TaxTx | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const t = useTheme();
+  const [limitText, setLimitText] = useState<string | null>(null);
 
   const txs = useMemo<TaxTx[]>(
     () =>
@@ -65,6 +67,33 @@ export default function ImpostoDeRenda() {
         <Chip label={me.display_name} selected={owner === me.user_id} onPress={() => setOwner(me.user_id)} />
         {partner ? <Chip label={partner.display_name} selected={owner === partner.user_id} onPress={() => setOwner(partner.user_id)} /> : null}
       </View>
+
+      <Card>
+        <SectionTitle>Limite de educação</SectionTitle>
+        <Small>Limite anual de dedução com instrução, por pessoa. Confirme o valor vigente no programa da Receita e ajuste aqui quando mudar.</Small>
+        <View style={{ flexDirection: "row", gap: space.sm, alignItems: "center" }}>
+          <TextInput
+            style={{ flex: 1, borderWidth: 1, borderColor: t.border, borderRadius: radius.md, padding: 12, fontSize: 16, color: t.text, backgroundColor: t.surface }}
+            keyboardType="numbers-and-punctuation"
+            placeholder="3.561,50"
+            placeholderTextColor={t.textMuted}
+            value={limitText ?? formatNumberBR(settings.data?.educationLimitCents ?? EDUCATION_LIMIT_CENTS_DEFAULT)}
+            onChangeText={setLimitText}
+            accessibilityLabel="Limite anual de educação em reais"
+          />
+          <Button
+            title="Salvar"
+            small
+            variant="secondary"
+            disabled={limitText === null}
+            onPress={() => {
+              const cents = tryParseBRL(limitText ?? "");
+              if (cents === null || cents < 0) return setMsg("Valor inválido. Use o formato 3.561,50.");
+              void run(async () => { await saveSettings(householdId, { educationLimitCents: cents }); await settings.reload(); setLimitText(null); setMsg("Limite salvo."); });
+            }}
+          />
+        </View>
+      </Card>
 
       <Card>
         <Small>Total dedutível em {y}</Small>
