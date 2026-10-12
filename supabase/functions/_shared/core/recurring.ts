@@ -13,6 +13,8 @@ export interface RecurringTx {
   amountUsdCents?: number | null;
   categoryId: number | null;
   kind: TxKind;
+  /** agregado de gasto pessoal do parceiro: nunca é uma recorrência */
+  hiddenAggregate?: boolean;
 }
 
 export type RecurringAlert = "duplicada" | "mudou_valor" | "encerrada";
@@ -57,7 +59,7 @@ const similar = (a: number, b: number, tol: number) => a > 0 && b > 0 && Math.ma
 export function detectRecurring(txs: readonly RecurringTx[], latestMonth: string): RecurringReport {
   const groups = new Map<string, RecurringTx[]>();
   for (const t of txs) {
-    if (t.kind !== "avista") continue;
+    if (t.kind !== "avista" || t.hiddenAggregate) continue;
     const key = merchantKey(t.descriptionRaw);
     if (!key) continue;
     (groups.get(key) ?? groups.set(key, []).get(key)!).push(t);

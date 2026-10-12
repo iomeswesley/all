@@ -67,12 +67,22 @@ export function projectedFutureObligations(txs: readonly ReconTx[]): { cents: nu
   return { cents, remainingInstallments: remaining };
 }
 
-export function reconcile(declared: DeclaredTotals, txs: readonly ReconTx[]): ReconcileResult {
-  const expenses = txs.filter((t) => t.section !== "pagamentos").reduce((a, t) => a + t.amountCents, 0);
+/** Totais de lançamentos que o usuário não enxerga (gasto pessoal do parceiro), para a conferência fechar. */
+export interface HiddenSums {
+  expensesCents: number;
+  expensesUsdCents: number;
+  /** Σ (parcelas restantes × valor) dos lançamentos ocultos */
+  futureCents: number;
+  remainingInstallments: number;
+}
+
+export function reconcile(declared: DeclaredTotals, txs: readonly ReconTx[], hidden?: HiddenSums): ReconcileResult {
+  const expenses = txs.filter((t) => t.section !== "pagamentos").reduce((a, t) => a + t.amountCents, 0) + (hidden?.expensesCents ?? 0);
   const payments = 0 - txs.filter((t) => t.kind === "pagamento").reduce((a, t) => a + t.amountCents, 0);
   const credits = 0 - txs.filter((t) => t.section === "pagamentos" && t.kind !== "pagamento").reduce((a, t) => a + t.amountCents, 0);
-  const usd = txs.reduce((a, t) => a + (t.amountUsdCents ?? 0), 0);
-  const future = projectedFutureObligations(txs);
+  const usd = txs.reduce((a, t) => a + (t.amountUsdCents ?? 0), 0) + (hidden?.expensesUsdCents ?? 0);
+  const base = projectedFutureObligations(txs);
+  const future = { cents: base.cents + (hidden?.futureCents ?? 0), remainingInstallments: base.remainingInstallments + (hidden?.remainingInstallments ?? 0) };
 
   const previous = declared.previousBalanceCents ?? 0;
   const computedTotal = previous + expenses - payments - credits;

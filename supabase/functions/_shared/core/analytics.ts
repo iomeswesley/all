@@ -17,6 +17,8 @@ export interface AnalyticsTx {
   /** user id do dono; null = nosso */
   ownerUserId: string | null;
   isPrivate?: boolean;
+  /** Linha sintética: total de gasto pessoal do parceiro por categoria/mês (sem itens). Fora de rankings de estabelecimento. */
+  hiddenAggregate?: boolean;
 }
 
 /** Só gasto: tira pagamentos de fatura. Estornos entram negativos e abatem. */
@@ -86,9 +88,10 @@ export interface Change {
   status: ChangeStatus;
 }
 
-function groupSum(txs: readonly AnalyticsTx[], keyOf: (t: AnalyticsTx) => { key: string; label: string }): Map<string, { label: string; cents: number }> {
+function groupSum(txs: readonly AnalyticsTx[], keyOf: (t: AnalyticsTx) => { key: string; label: string }, skipHidden = false): Map<string, { label: string; cents: number }> {
   const map = new Map<string, { label: string; cents: number }>();
   for (const t of spending(txs)) {
+    if (skipHidden && t.hiddenAggregate) continue;
     const { key, label } = keyOf(t);
     const cur = map.get(key) ?? { label, cents: 0 };
     cur.cents += t.amountCents;
@@ -112,8 +115,8 @@ export function compareMonths(
     by === "category"
       ? (t: AnalyticsTx) => ({ key: String(t.categoryId ?? CAT.OUTROS), label: labelOfCategory(t.categoryId ?? CAT.OUTROS) })
       : (t: AnalyticsTx) => merchantGroup(t);
-  const cur = groupSum(current, keyOf);
-  const prev = groupSum(previous, keyOf);
+  const cur = groupSum(current, keyOf, by === "merchant");
+  const prev = groupSum(previous, keyOf, by === "merchant");
   const keys = new Set([...cur.keys(), ...prev.keys()]);
   const out: Change[] = [];
   for (const key of keys) {
@@ -136,7 +139,7 @@ export interface MerchantTotal {
 export function topMerchants(txs: readonly AnalyticsTx[], n = 10): MerchantTotal[] {
   const map = new Map<string, MerchantTotal>();
   for (const t of spending(txs)) {
-    if (t.kind === "encargo") continue;
+    if (t.kind === "encargo" || t.hiddenAggregate) continue;
     const { key, label } = merchantGroup(t);
     const cur = map.get(key) ?? { key, label, totalCents: 0, count: 0 };
     cur.totalCents += t.amountCents;
@@ -161,4 +164,28 @@ export function splitByOwner(txs: readonly AnalyticsTx[], me: string): OwnerSpli
     else out.partnerCents += t.amountCents;
   }
   return out;
+}
+
+/** Transforma os totais de gasto pessoal do parceiro (RPC) em linhas sintéticas para os gráficos. */
+export interface HiddenTotal {
+  statementMonth: string;
+  categoryId: number | null;
+  ownerUserId: string;
+  totalCents: number;
+  count: number;
+}
+
+export function hiddenTotalsToTx(rows: readonly HiddenTotal[], labelOf: (ownerUserId: string) => string): AnalyticsTx[] {
+  return rows.map((r) => ({
+    statementMonth: r.statementMonth,
+    postedOn: `${r.statementMonth}-01`,
+    descriptionRaw: `GASTO PESSOAL ${labelOf(r.ownerUserId).toUpperCase()}`,
+    merchantName: `Gasto pessoal (${labelOf(r.ownerUserId)})`,
+    amountCents: r.totalCents,
+    categoryId: r.categoryId,
+    kind: "avista" as const,
+    ownerUserId: r.ownerUserId,
+    isPrivate: true,
+    hiddenAggregate: true,
+  }));
 }

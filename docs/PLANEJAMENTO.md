@@ -360,3 +360,11 @@ Cada commit mantém `pnpm test` verde. Ao fim da fase: lista de pendências e ri
 - **Dono** = `owner_user_id` (null = nosso). Dono do cartão é sugestão automática; regras por estabelecimento podem fixar o dono.
 - **Sem service role:** a Edge Function usa o JWT do usuário; a RLS vale também na importação.
 - **Core duplicado em `supabase/functions/_shared/core`** (o deploy só empacota essa pasta); teste de sincronia impede divergência.
+
+## 14. Fase 2 — decisões
+
+- **Orçamento** é por competência (mês do vencimento da fatura) e vale para os meses seguintes até ser alterado.
+- **Alertas 80% / 100%**: avaliados quando uma fatura é confirmada (não há gasto em tempo real sem Open Finance). Cada nível é enviado uma única vez por categoria e mês (`budget_alerts`).
+- **Push**: tokens do Expo em `push_tokens`; envio por Edge Function `notify` (JWT do usuário). Android remoto exige *development build* (Expo Go não recebe push desde o SDK 53); iOS exige conta Apple Developer. Sem isso o app funciona normalmente, com avisos dentro do app.
+- **Gasto pessoal**: `is_private` + dono; a RLS já esconde as linhas do parceiro. O parceiro enxerga apenas totais por categoria/mês via `partner_private_totals()` e a conferência da fatura é ajustada com `statement_hidden_sums()`.
+- **Check-in e recomendações**: regras determinísticas com estimativa de economia (sem IA).
