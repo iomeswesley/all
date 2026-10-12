@@ -2,8 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PGlite } from "@electric-sql/pglite";
 import { beforeAll, describe, expect, it } from "vitest";
-import { notifyStatementConfirmed, type NotifyStore, type PushSender } from "../../../supabase/functions/notify/process.ts";
+import { notifyManualEntry, notifyStatementConfirmed, type NotifyStore, type PushSender } from "../../../supabase/functions/notify/process.ts";
 import { processStatement } from "../../../supabase/functions/parse-statement/process.ts";
+import { buildManualRow } from "../../core/src/manual.ts";
 import { addUser, asUser, createDb } from "./harness.ts";
 import { sqlStore } from "./sql-store.ts";
 
@@ -28,6 +29,7 @@ function notifyStore(user: string): NotifyStore {
     sentAlerts: async (m) => new Set((await run("select category_id, level from public.budget_alerts where month = $1", [`${m}-01`])).map((r: any) => `${m}|${r.category_id}|${r.level}`)),
     markAlerts: async (alerts) => { for (const a of alerts) await run("insert into public.budget_alerts (household_id, category_id, month, level) values ((select household_id from public.members where user_id = $1), $2, $3, $4) on conflict do nothing", [user, a.categoryId, `${a.month}-01`, a.level]); },
     pushTokens: async () => (await run("select user_id as \"userId\", token from public.push_tokens")),
+    transaction: async (id) => (await run("select id, to_char(posted_on,'YYYY-MM-DD') as \"postedOn\", description_clean as \"descriptionClean\", amount_cents::int as \"amountCents\", category_id as \"categoryId\", needs_review as \"needsReview\", is_private as \"isPrivate\", source from public.transactions where id = $1", [id]))[0] ?? null,
     statementCounts: async (id) => { const r = (await run("select count(*)::int as c, count(*) filter (where needs_review)::int as r from public.transactions where statement_id = $1", [id]))[0]; return { count: r.c, reviewCount: r.r }; },
   };
 }
@@ -130,5 +132,73 @@ describe("notify: depois de confirmar", () => {
     const { sender } = fakeSender();
     const res = await notifyStatementConfirmed(notifyStore(ana), sender, statementId);
     expect(res.status === "ok" && res.alerts.map((a) => a.level)).toEqual(["warn80"]);
+  });
+});
+
+
+describe("notify: lançamento manual (Pix, dinheiro)", () => {
+  async function addManual(user: string, over: Record<string, unknown> = {}, input: Partial<Parameters<typeof buildManualRow>[0]> = {}) {
+    const account = await asUser(db, user, async () => (await q("select public.ensure_cash_account() as id"))[0].id);
+    const row: Record<string, unknown> = { ...buildManualRow({ description: "Mercado do bairro", amountCents: 48000, date: "2026-10-10", method: "pix", categoryId: 1, ownerUserId: null, isPrivate: false, ...input }, crypto.randomUUID()), ...over };
+    const full = { household_id: household, account_id: account, ...row };
+    const keys = Object.keys(full);
+    return asUser(db, user, async () => (await q(`insert into public.transactions (${keys.join(",")}) values (${keys.map((_, i) => `$${i + 1}`).join(",")}) returning id`, Object.values(full)))[0].id as string);
+  }
+
+  beforeAll(async () => {
+    await q("delete from public.budget_alerts");
+    await q("delete from public.budgets");
+    await asUser(db, ana, () => q("insert into public.push_tokens (user_id, household_id, token) values ($1,$2,$3) on conflict do nothing", [ana, household, TOKEN_ANA]));
+    await asUser(db, bia, () => q("insert into public.push_tokens (user_id, household_id, token) values ($1,$2,$3) on conflict do nothing", [bia, household, TOKEN_BIA]));
+    // orçamento de mercado em outubro = R$ 500
+    await asUser(db, ana, () => q("insert into public.budgets (household_id, category_id, month, limit_cents) values ($1,1,'2026-10-01',50000)", [household]));
+  });
+
+  it("alerta de 80% sai na hora do lançamento, e o par recebe o aviso do lançamento", async () => {
+    const id = await addManual(ana);
+    const { sent, sender } = fakeSender();
+    const res = await notifyManualEntry(notifyStore(ana), sender, id);
+    expect(res.status === "ok" && res.alerts.map((a) => a.level)).toEqual(["warn80"]);
+    expect(sent.filter((m) => m.data.type === "budget").map((m) => m.to).sort()).toEqual([TOKEN_ANA, TOKEN_BIA].sort());
+    const manual = sent.filter((m) => m.data.type === "manual");
+    expect(manual).toHaveLength(1);
+    expect(manual[0]).toMatchObject({ to: TOKEN_BIA, title: "Ana lançou R$ 480,00", data: { txId: id } });
+    expect((manual[0] as any).categoryIdentifier).toBeUndefined(); // já tem categoria: sem botões
+  });
+
+  it("cruzar 100% avisa de novo, uma única vez", async () => {
+    const id = await addManual(bia, {}, { description: "Padaria", amountCents: 3000 });
+    const first = fakeSender();
+    const res = await notifyManualEntry(notifyStore(bia), first.sender, id);
+    expect(res.status === "ok" && res.alerts.map((a) => a.level)).toEqual(["over100"]);
+    const again = fakeSender();
+    const res2 = await notifyManualEntry(notifyStore(bia), again.sender, id);
+    expect(res2.status === "ok" && res2.alerts).toEqual([]);
+    expect(again.sent.filter((m) => m.data.type === "budget")).toEqual([]);
+  });
+
+  it("lançamento sem categoria leva botões de classificação para o par", async () => {
+    const id = await addManual(ana, { category_id: 12, category_source: "none", needs_review: true, confidence: "baixa" }, { description: "Diarista", amountCents: 18000, categoryId: null });
+    const { sent, sender } = fakeSender();
+    await notifyManualEntry(notifyStore(ana), sender, id);
+    const m = sent.find((x) => x.data.type === "manual") as any;
+    expect(m.categoryIdentifier).toBe("categorize");
+    expect(m.data).toMatchObject({ route: "/revisar", txId: id, month: "2026-10" });
+  });
+
+  it("gasto pessoal: conta no orçamento, mas o par não recebe o aviso do lançamento", async () => {
+    await q("delete from public.budget_alerts");
+    const id = await addManual(bia, {}, { description: "Presente surpresa", amountCents: 9000, isPrivate: true, ownerUserId: bia, categoryId: 1 });
+    const { sent, sender } = fakeSender();
+    const res = await notifyManualEntry(notifyStore(bia), sender, id);
+    expect(res.status === "ok" && res.partnerNotified).toBe(false);
+    expect(sent.some((m) => m.data.type === "manual")).toBe(false);
+    expect(JSON.stringify(sent)).not.toMatch(/surpresa/i);
+  });
+
+  it("lançamento que não é manual (da fatura) → not_found", async () => {
+    const stmtTx = (await q("select id from public.transactions where statement_id = $1 limit 1", [statementId]))[0].id;
+    const { sender } = fakeSender();
+    expect(await notifyManualEntry(notifyStore(ana), sender, stmtTx)).toEqual({ status: "not_found" });
   });
 });

@@ -78,6 +78,13 @@ export function notifySupabaseStore(db: SupabaseClient, userId: string): NotifyS
       const rows = ok(await db.from("push_tokens").select("user_id, token"), "push_tokens") ?? [];
       return rows.map((r) => ({ userId: r.user_id as string, token: r.token as string }));
     },
+    async transaction(id) {
+      const rows = ok(await db.from("transactions").select("id, posted_on, description_clean, amount_cents, category_id, needs_review, is_private, source").eq("id", id).limit(1), "transactions");
+      const r = rows?.[0];
+      return r
+        ? { id: r.id as string, postedOn: r.posted_on as string, descriptionClean: r.description_clean as string, amountCents: Number(r.amount_cents), categoryId: (r.category_id as number | null) ?? null, needsReview: Boolean(r.needs_review), isPrivate: Boolean(r.is_private), source: r.source as string }
+        : null;
+    },
     async statementCounts(statementId) {
       const rows = ok(await db.from("transactions").select("needs_review").eq("statement_id", statementId), "transactions") ?? [];
       return { count: rows.length, reviewCount: rows.filter((r) => r.needs_review).length };
