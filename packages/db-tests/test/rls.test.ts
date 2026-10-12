@@ -243,7 +243,9 @@ describe("correção manual → regra para os dois", () => {
 
 describe("Storage: PDFs no bucket privado", () => {
   it("o bucket é privado", async () => {
-    expect(await q("select id, public from storage.buckets")).toEqual([{ id: "statements", public: false }]);
+    const buckets = await q("select id, public from storage.buckets");
+    expect(buckets.find((b: any) => b.id === "statements")).toEqual({ id: "statements", public: false });
+    expect(buckets.every((b: any) => b.public === false)).toBe(true);
   });
   it("cada casal só acessa a própria pasta", async () => {
     await asUser(db, ana, () => q("insert into storage.objects (bucket_id, name) values ('statements', $1)", [`${hA}/fatura.pdf`]));
