@@ -24,8 +24,10 @@ export default function Entrar() {
     setError(null);
     const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true } });
     setBusy(false);
-    if (error) setError("Não consegui enviar o código. Confira o e-mail e tente de novo.");
-    else setSent(true);
+    if (error) {
+      const motivo = error.status === 429 ? " Muitas tentativas: aguarde um minuto." : ` (${error.message})`;
+      setError(`Não consegui enviar o código.${motivo}`);
+    } else setSent(true);
   }
 
   async function verify() {
