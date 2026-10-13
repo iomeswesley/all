@@ -5,7 +5,7 @@ import { Body, Button, Card, ErrorText, H1, Screen } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
 import { radius, space, useTheme } from "@/lib/theme";
 
-/** Login sem senha: o Supabase manda um código de 6 dígitos por e-mail. */
+/** Login sem senha: o Supabase manda um código numérico por e-mail. */
 export default function Entrar() {
   const t = useTheme();
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function Entrar() {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={{ gap: space.lg, paddingTop: space.xl }}>
           <H1>Finanças do casal</H1>
-          <Body muted>Entre com seu e-mail. Enviamos um código de 6 dígitos — sem senha para lembrar.</Body>
+          <Body muted>Entre com seu e-mail. Enviamos um código — sem senha para lembrar.</Body>
           <Card>
             <TextInput
               style={input}
@@ -62,15 +62,15 @@ export default function Entrar() {
             {sent ? (
               <>
                 <TextInput
-                  style={[input, { letterSpacing: 6, textAlign: "center", fontSize: 22 }]}
+                  style={[input, { letterSpacing: 4, textAlign: "center", fontSize: 22 }]}
                   placeholder="000000"
                   placeholderTextColor={t.textMuted}
                   keyboardType="number-pad"
                   textContentType="oneTimeCode"
-                  maxLength={6}
+                  maxLength={10}
                   value={code}
                   onChangeText={setCode}
-                  accessibilityLabel="Código de 6 dígitos"
+                  accessibilityLabel="Código de acesso"
                 />
                 <Button title="Entrar" onPress={verify} loading={busy} disabled={code.trim().length < 6} />
                 <Button title="Usar outro e-mail" variant="ghost" onPress={() => { setSent(false); setCode(""); }} />
