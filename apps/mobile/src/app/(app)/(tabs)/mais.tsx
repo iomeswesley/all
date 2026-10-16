@@ -10,7 +10,7 @@ import { useReady, useSession } from "@/lib/session";
 import { space, useTheme } from "@/lib/theme";
 
 type Path =
-  | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encargos"
+  | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encontro" | "/encargos"
   | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado" | "/busca" | "/mesada";
 
 export default function Mais() {
@@ -45,6 +45,7 @@ export default function Mais() {
 
       <SectionTitle>Entender o gasto</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
+        {item("heart-circle-outline", "Encontro do dinheiro", "Roteiro de 20 min a dois, com combinados", "/encontro")}
         {item("clipboard-outline", "Check-in do mês", "Resumo e recomendações com economia em R$/mês", "/checkin")}
         {item("search-outline", "Lançamentos", "Buscar, filtrar e somar qualquer gasto", "/busca")}
         {item("chatbubble-ellipses-outline", "Pergunte aos dados", "“Quanto gastamos com restaurante desde julho?”", "/perguntas")}

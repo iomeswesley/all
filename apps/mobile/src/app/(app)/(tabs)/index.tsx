@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBrDayMonth, formatMonthLong, formatMonthShort, forecastMonths, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, upcomingPlanned, type Change } from "@financas/core";
 import { AllowanceCard } from "@/components/AllowanceCard";
+import { MoneyDateShortcut } from "@/components/MoneyDate";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { PriceChangesCard } from "@/components/PriceChanges";
 import { CommentsInbox } from "@/components/CommentsInbox";
@@ -113,6 +114,8 @@ export default function Inicio() {
             </View>
           </Hero>
           {analysis ? <PaceCard analysis={analysis} today={today} /> : null}
+
+          <MoneyDateShortcut analysis={analysis} />
 
           {view.reviewCount > 0 ? (
             <Card style={{ paddingVertical: 4 }}>
