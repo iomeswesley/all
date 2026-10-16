@@ -43,6 +43,13 @@ describe("baixa de gasto planejado", () => {
     expect((await asUser(db, bia, () => q("select status, transaction_id from public.planned_matches"))).map((r) => [r.status, r.transaction_id])).toEqual([["feito", txA]]);
   });
 
+  it("entra na exportação de dados só do próprio casal", async () => {
+    const a = await asUser(db, bia, async () => (await q("select public.export_household_data() as d"))[0].d);
+    expect(a.planned_matches.map((m: any) => m.planned_id)).toEqual([pA]);
+    const b = await asUser(db, carlos, async () => (await q("select public.export_household_data() as d"))[0].d);
+    expect(b.planned_matches).toEqual([]);
+  });
+
   it("uma baixa 'feito' por ocorrência e um lançamento só; status inválido é recusado", async () => {
     expect(await rejects(mark(bia, hA, pA, "2026-09-05", "feito"))).toBe(true);
     expect(await rejects(mark(bia, hA, pA, "2026-10-05", "feito", txA))).toBe(true);

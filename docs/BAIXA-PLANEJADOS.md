@@ -22,5 +22,5 @@ npx supabase db push        # migration 20261017000002_planned_matches
 ```
 
 ## Pendências
-- A tabela **ainda não entra na exportação de dados (LGPD)**. Ficou de fora para não redefinir `export_household_data()` em paralelo com outras migrations. Basta acrescentar `'planned_matches'` na próxima migration que mexer nessa função.
+- A tabela entra na exportação de dados (LGPD) — migration `20261017000003_export_planned_matches.sql`.
 - A previsão (`forecast.ts`) não usa as baixas: ela já ignora as ocorrências com data anterior a hoje.
