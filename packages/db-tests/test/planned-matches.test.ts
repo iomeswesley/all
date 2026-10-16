@@ -15,7 +15,7 @@ const planned = (user: string, h: string) =>
 async function manualTx(user: string, h: string) {
   const account = await asUser(db, user, async () => (await q("select public.ensure_cash_account() as id"))[0].id);
   const row = buildManualRow({ description: "Colégio", amountCents: 120000, date: "2026-09-05", method: "pix", categoryId: null, ownerUserId: null, isPrivate: false }, crypto.randomUUID());
-  const full: Record<string, unknown> = { household_id: h, account_id: account, description_clean: "Pix · Colégio", ...row };
+  const full: Record<string, unknown> = { household_id: h, account_id: account, ...row };
   const keys = Object.keys(full);
   return asUser(db, user, async () => (await q(`insert into public.transactions (${keys.join(",")}) values (${keys.map((_, i) => `$${i + 1}`).join(",")}) returning id`, Object.values(full)))[0].id as string);
 }
