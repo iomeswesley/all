@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBrDayMonth, formatMonthLong, formatMonthShort, forecastMonths, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, upcomingPlanned, type Change } from "@financas/core";
+import { MoneyDateShortcut } from "@/components/MoneyDate";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { Badge, Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Money, Row, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, defaultMonth, latestStatementMonth, useAnalysis } from "@/lib/analysis";
@@ -106,6 +107,8 @@ export default function Inicio() {
               {ahead?.next ? <HeroPill>{`${formatMonthShort(ahead.next.monthKey)} previsto ${formatBRL(ahead.next.totalCents)}`}</HeroPill> : null}
             </View>
           </Hero>
+
+          <MoneyDateShortcut analysis={analysis} />
 
           {view.reviewCount > 0 ? (
             <Card style={{ paddingVertical: 4 }}>

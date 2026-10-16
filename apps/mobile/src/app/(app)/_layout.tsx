@@ -1,4 +1,5 @@
 import { Redirect, Stack } from "expo-router";
+import { useMoneyDateReminders } from "@/lib/money-date";
 import { usePlannedReminders } from "@/lib/reminders";
 import { useSession } from "@/lib/session";
 import { useTheme } from "@/lib/theme";
@@ -7,6 +8,7 @@ export default function AppLayout() {
   const { state } = useSession();
   const t = useTheme();
   usePlannedReminders(state.status === "ready");
+  useMoneyDateReminders(state.status === "ready");
   if (state.status === "loading") return null;
   if (state.status !== "ready") return <Redirect href="/" />;
   return (
@@ -18,6 +20,7 @@ export default function AppLayout() {
       <Stack.Screen name="meu-casal" options={{ title: "Casal" }} />
       <Stack.Screen name="orcamento" options={{ title: "Orçamento" }} />
       <Stack.Screen name="checkin" options={{ title: "Check-in do mês" }} />
+      <Stack.Screen name="encontro" options={{ title: "Encontro do dinheiro" }} />
       <Stack.Screen name="encargos" options={{ title: "Encargos" }} />
       <Stack.Screen name="habitos" options={{ title: "Custo do hábito" }} />
       <Stack.Screen name="ir" options={{ title: "Imposto de renda" }} />
