@@ -1,10 +1,12 @@
 import { Redirect, Stack } from "expo-router";
+import { usePlannedReminders } from "@/lib/reminders";
 import { useSession } from "@/lib/session";
 import { useTheme } from "@/lib/theme";
 
 export default function AppLayout() {
   const { state } = useSession();
   const t = useTheme();
+  usePlannedReminders(state.status === "ready");
   if (state.status === "loading") return null;
   if (state.status !== "ready") return <Redirect href="/" />;
   return (

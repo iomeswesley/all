@@ -5,6 +5,7 @@ import { categoryName, formatBrDate, formatMonthLong, formatMonthShort, forecast
 import { TimelineBars, type TimelineBar } from "@/components/charts";
 import { ForecastByCategory } from "@/components/ForecastByCategory";
 import { PlannedMatchCard } from "@/components/PlannedMatchCard";
+import { RemindersCard } from "@/components/RemindersCard";
 import { Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Row, Screen, SectionTitle, Small, Stat } from "@/components/ui";
 import { latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
@@ -119,6 +120,7 @@ export default function Planejar() {
           {active.map((p, i) => <PlannedRow key={p.id} p={p} last={i === active.length - 1} onPress={() => router.push({ pathname: "/planejado", params: { id: p.id } })} />)}
         </Card>
       )}
+      {active.length > 0 ? <RemindersCard /> : null}
     </Screen>
   );
 }
