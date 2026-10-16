@@ -5,11 +5,12 @@ import { CAT, categoryName } from "./categories.ts";
 import { addMonthsToKey, formatMonthLong, formatMonthShort } from "./dates.ts";
 import { formatBRL } from "./money.ts";
 import { decodeDescription } from "./normalize.ts";
+import { detectPriceChanges } from "./price-change.ts";
 import { detectRecurring, type RecurringReport } from "./recurring.ts";
 
 export type CheckinTx = AnalyticsTx & { amountUsdCents?: number | null };
 
-export type RecommendationKind = "duplicada" | "orcamento" | "categoria_acima" | "juros" | "iof" | "anuidade" | "delivery";
+export type RecommendationKind = "duplicada" | "orcamento" | "categoria_acima" | "juros" | "iof" | "anuidade" | "delivery" | "preco";
 
 export interface Recommendation {
   id: string;
@@ -90,6 +91,16 @@ export function buildCheckin(input: CheckinInput): Checkin {
         savingsCentsPerMonth: r.typicalCents,
       });
     }
+  }
+
+  // 1b) assinatura/recorrência que aumentou de preço (câmbio não conta)
+  for (const p of detectPriceChanges(real, month).increases) {
+    recs.push({
+      id: `preco:${p.key}`, kind: "preco", estimate: false,
+      title: `${p.label} ficou mais cara`,
+      detail: `Passou de ${formatBRL(p.fromCents!)} para ${formatBRL(p.toCents!)} (+${formatBRL(p.annualDiffCents)}/ano). Veja se vale manter ou trocar de plano.`,
+      savingsCentsPerMonth: p.diffCents,
+    });
   }
 
   // 2) orçamento estourado
