@@ -273,6 +273,7 @@ function EditModal({ target, t, onClose, onSave, onDelete }: {
   onSave: (patch: { amountCents: number; description?: string; date?: string }) => void; onDelete: () => void;
 }) {
   const isNew = target === "new";
+  const router = useRouter();
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
@@ -313,6 +314,7 @@ function EditModal({ target, t, onClose, onSave, onDelete }: {
           <TextInput style={input} placeholder="Valor (ex.: 123,45)" placeholderTextColor={t.textMuted} keyboardType="numbers-and-punctuation" value={amount} onChangeText={setAmount} accessibilityLabel="Valor em reais" />
           {error ? <ErrorText message={error} /> : null}
           <Button title="Salvar" onPress={save} />
+          {!isNew && target && target.kind !== "pagamento" && !target.is_private ? <Button title="Dividir diferente" variant="secondary" onPress={() => { onClose(); router.push({ pathname: "/dividir", params: { id: target.id } }); }} /> : null}
           {!isNew ? <Button title="Excluir lançamento" variant="danger" onPress={onDelete} /> : null}
           <Button title="Cancelar" variant="ghost" onPress={onClose} />
         </View>
