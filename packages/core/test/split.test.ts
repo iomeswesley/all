@@ -60,7 +60,7 @@ describe("allocateCents — arredondamento exato ao centavo", () => {
     for (let i = 0; i < 5000; i++) {
       const n = int(r, 1, 5);
       const weights = Array.from({ length: n }, () => int(r, 0, 100));
-      if (weights.every((w) => w === 0)) weights[0] = 1;
+      if (!weights.some((w) => w > 0)) weights[0] = 1;
       const total = int(r, -5_000_000, 50_000_000);
       const parts = allocateCents(total, weights);
       const sumW = weights.reduce((a, b) => a + b, 0);
