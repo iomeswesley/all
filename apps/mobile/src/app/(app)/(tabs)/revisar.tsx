@@ -1,25 +1,30 @@
-import { useMemo, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { categoryName, decodeDescription, formatBrDayMonth, merchantKey, CAT } from "@financas/core";
+import { categoryName, decodeDescription, formatBrDayMonth, merchantHistory, merchantKey, suggestReviewCategory, CAT, type TxKind } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
-import { Body, Card, Chip, Empty, ErrorText, H1, Loading, Money, Screen, Small } from "@/components/ui";
+import { SwipeReview, type ReviewCard } from "@/components/SwipeReview";
+import { Body, Card, Chip, Empty, ErrorText, H1, Loading, Money, Screen, Segmented, Small } from "@/components/ui";
 import { fetchAll, useLoad } from "@/lib/data";
 import { applyCategory, applyToIds, setPrivate } from "@/lib/mutations";
+import { fetchRules } from "@/lib/rules";
 import { useReady } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { categoryColor, space, useTheme } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
 
-interface Pending { id: string; description_raw: string; description_clean: string; amount_cents: number; posted_on: string; category_id: number | null }
+interface Pending { id: string; description_raw: string; description_clean: string; amount_cents: number; posted_on: string; category_id: number | null; kind: TxKind }
 interface Group { key: string; label: string; items: Pending[]; totalCents: number }
 
 async function load() {
-  const [pending, used] = await Promise.all([
+  const [pending, used, rules] = await Promise.all([
     fetchAll<Pending>((from, to) =>
-      supabase.from("transactions").select("id, description_raw, description_clean, amount_cents, posted_on, category_id").eq("needs_review", true).neq("kind", "pagamento").order("posted_on", { ascending: false }).range(from, to) as unknown as PromiseLike<{ data: Pending[] | null; error: { message: string } | null }>,
+      supabase.from("transactions").select("id, description_raw, description_clean, amount_cents, posted_on, category_id, kind").eq("needs_review", true).neq("kind", "pagamento").order("posted_on", { ascending: false }).range(from, to) as unknown as PromiseLike<{ data: Pending[] | null; error: { message: string } | null }>,
     ),
     // categorias mais usadas, para sugerir 1 toque
-    supabase.from("transactions").select("category_id").eq("needs_review", false).not("category_id", "is", null).limit(1000),
+    supabase.from("transactions").select("category_id, description_raw").eq("needs_review", false).not("category_id", "is", null).order("posted_on", { ascending: false }).limit(1000),
+    // regras do casal (para a sugestão do modo cartões); falha aqui não derruba a tela
+    fetchRules().catch(() => []),
   ]);
   const freq = new Map<number, number>();
   for (const r of used.data ?? []) {
@@ -27,8 +32,12 @@ async function load() {
     if (id !== CAT.OUTROS) freq.set(id, (freq.get(id) ?? 0) + 1);
   }
   const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id]) => id);
-  return { pending, top };
+  const history = merchantHistory((used.data ?? []).map((r) => ({ description: r.description_raw as string, categoryId: r.category_id as number })));
+  return { pending, top, history, rules };
 }
+
+type Mode = "lista" | "cartoes";
+const MODE_KEY = "revisar.mode";
 
 export default function Revisar() {
   const t = useTheme();
@@ -37,6 +46,22 @@ export default function Revisar() {
   const [sheet, setSheet] = useState<Group | null>(null);
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
+  const [mode, setModeState] = useState<Mode>("lista");
+  const [deckId, setDeckId] = useState(0);
+
+  useEffect(() => {
+    AsyncStorage.getItem(MODE_KEY).then((v) => v === "cartoes" && setModeState("cartoes")).catch(() => {});
+  }, []);
+  function setMode(m: Mode) {
+    setModeState(m);
+    void AsyncStorage.setItem(MODE_KEY, m).catch(() => {});
+    void refresh(); // traz o que foi revisado no outro modo
+  }
+  /** Recarrega e recomeça a fila de cartões com os dados novos. */
+  async function refresh() {
+    await reload();
+    setDeckId((n) => n + 1);
+  }
 
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
@@ -66,17 +91,37 @@ export default function Revisar() {
     }
   }
 
+  const cards = useMemo<ReviewCard[]>(
+    () =>
+      groups.map((g) => ({
+        ...g,
+        suggestion: suggestReviewCategory(
+          { description: g.items[0]!.description_raw, kind: g.items[0]!.kind, categoryId: g.items[0]!.category_id },
+          { rules: data?.rules, history: data?.history, top: data?.top },
+        ),
+      })),
+    [groups, data],
+  );
+
   const total = groups.reduce((a, g) => a + g.items.length, 0);
+  const cardMode = mode === "cartoes";
   return (
-    <Screen onRefresh={reload} refreshing={loading || busy}>
+    <Screen onRefresh={() => void refresh()} refreshing={loading || busy}>
       <H1>Revisar</H1>
-      <Body muted>Toque numa categoria: vale para todos os lançamentos desse estabelecimento e para os próximos, para os dois.</Body>
+      <Segmented<Mode> options={[{ value: "lista", label: "Lista" }, { value: "cartoes", label: "Cartões" }]} value={mode} onChange={setMode} />
+      <Body muted>
+        {cardMode
+          ? "Deslize para a direita para aceitar, para a esquerda para deixar para depois. Toque para trocar."
+          : "Toque numa categoria: vale para todos os lançamentos desse estabelecimento e para os próximos, para os dois."}
+      </Body>
       {loading && !data ? <Loading /> : null}
       {error || fail ? <ErrorText message={(error ?? fail)!} /> : null}
       {data && groups.length === 0 ? <Empty title="Tudo revisado 🎉" hint="Quando uma fatura nova trouxer estabelecimentos desconhecidos, eles aparecem aqui." /> : null}
-      {total > 0 ? <Small>{total} lançamentos em {groups.length} estabelecimentos</Small> : null}
+      {total > 0 && !cardMode ? <Small>{total} lançamentos em {groups.length} estabelecimentos</Small> : null}
 
-      {groups.map((g) => (
+      {cardMode && data && cards.length > 0 ? <SwipeReview key={deckId} cards={cards} meUserId={me.user_id} /> : null}
+
+      {!cardMode && groups.map((g) => (
         <Card key={g.key} style={{ gap: space.sm }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", gap: space.md }}>
             <View style={{ flex: 1 }}>
