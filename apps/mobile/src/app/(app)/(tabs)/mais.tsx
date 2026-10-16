@@ -11,7 +11,7 @@ import { space, useTheme } from "@/lib/theme";
 
 type Path =
   | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encargos"
-  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado";
+  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado" | "/acerto";
 
 export default function Mais() {
   const t = useTheme();
@@ -68,6 +68,7 @@ export default function Mais() {
         {item("business-outline", "Contas e bancos", "Adicionar cartões e contas de outros bancos", "/contas")}
         {item("swap-horizontal-outline", "Cartões e donos", "De quem é cada cartão (meu / dela / nosso)", "/cartoes")}
         {item("git-branch-outline", "Regras", "O que o app aprendeu com suas correções", "/regras")}
+        {item("git-compare-outline", "Acerto do casal", "Divisão do nosso (50/50, renda ou %) e quem deve a quem", "/acerto")}
         {item("people-outline", "Casal", `${householdName} · convidar parceiro(a)`, "/meu-casal", true)}
       </Card>
 
