@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { formatMonthLong, formatMonthShort, futureInstallmentTimeline, statementMonthKey } from "@financas/core";
 import { HBars } from "@/components/charts";
-import { Badge, Banner, Body, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
+import { Badge, Banner, Body, Card, Empty, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { fetchConfirmedTransactions, fetchStatements, useLoad } from "@/lib/data";
 import { space, useTheme } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
@@ -25,7 +25,6 @@ export default function Parcelas() {
 
   return (
     <Screen onRefresh={reload} refreshing={loading}>
-      <H1>Parcelas</H1>
       {error ? <ErrorText message={error} /> : null}
       {!statement || !timeline ? (
         <Empty title="Sem fatura confirmada" hint="Confirme uma fatura para ver o que já está comprometido nos próximos meses." />

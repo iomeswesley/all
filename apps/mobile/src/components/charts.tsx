@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { BarChart, PieChart } from "react-native-gifted-charts";
 import { categoryName, formatMonthShort, percent, type CategoryTotal, type MonthlyCategorySeries } from "@financas/core";
 import { privacyOn } from "@/lib/prefs";
@@ -172,6 +172,97 @@ export function SplitBar({ parts }: { parts: { key: string; label: string; cents
       {parts.map((p) => (
         <LegendRow key={p.key} color={p.color} label={p.label} cents={p.cents} pct={percent(p.cents, total)} />
       ))}
+    </View>
+  );
+}
+
+export interface TimelineBar {
+  monthKey: string;
+  kind: "history" | "forecast";
+  /** histórico: total do mês (null = sem dados) */
+  actualCents?: number | null;
+  /** previsão: média do histórico + planejados */
+  baselineCents?: number;
+  plannedCents?: number;
+}
+
+/**
+ * Evolução e previsão numa linha do tempo só: meses passados em barra cheia,
+ * meses previstos com a média (translúcida) e os planejados por cima. Toque seleciona o mês.
+ */
+export function TimelineBars({ bars, selected, onSelect, height = 168 }: { bars: TimelineBar[]; selected: string; onSelect: (monthKey: string) => void; height?: number }) {
+  const t = useTheme();
+  const value = (b: TimelineBar) => (b.kind === "history" ? b.actualCents ?? 0 : (b.baselineCents ?? 0) + (b.plannedCents ?? 0));
+  const max = Math.max(...bars.map(value), 1);
+  const firstForecast = bars.findIndex((b) => b.kind === "forecast");
+  const baseline = bars.find((b) => b.kind === "forecast")?.baselineCents ?? 0;
+  const summary = bars.map((b) => `${formatMonthShort(b.monthKey)} ${b.kind === "forecast" ? "previsto " : ""}${formatBRL(value(b))}`).join("; ");
+  const px = (cents: number) => Math.max((cents / max) * height, cents > 0 ? 3 : 0);
+
+  return (
+    <View accessible accessibilityRole="adjustable" accessibilityLabel={`Evolução e previsão por mês. ${summary}`} style={{ gap: space.sm }}>
+      <View style={{ height, flexDirection: "row", alignItems: "flex-end", gap: 6 }}>
+        {baseline > 0 ? (
+          <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, bottom: px(baseline), borderTopWidth: 1, borderStyle: "dashed", borderColor: t.textMuted, opacity: 0.6 }} />
+        ) : null}
+        {bars.map((b, i) => {
+          const on = b.monthKey === selected;
+          const fade = on ? 1 : 0.55;
+          return (
+            <Pressable
+              key={b.monthKey}
+              onPress={() => onSelect(b.monthKey)}
+              hitSlop={{ top: 8, bottom: 24 }}
+              style={{ flex: 1, height: "100%", justifyContent: "flex-end", marginLeft: i === firstForecast && i > 0 ? 6 : 0 }}
+            >
+              {b.kind === "history" ? (
+                b.actualCents == null ? (
+                  <View style={{ height: 3, borderRadius: 2, backgroundColor: t.border }} />
+                ) : (
+                  <View style={{ height: px(b.actualCents), borderRadius: 7, backgroundColor: t.primaryFill, opacity: fade }} />
+                )
+              ) : (
+                <View style={{ opacity: fade }}>
+                  {(b.plannedCents ?? 0) > 0 ? <View style={{ height: px(b.plannedCents ?? 0), borderTopLeftRadius: 7, borderTopRightRadius: 7, backgroundColor: t.planned, marginBottom: 2 }} /> : null}
+                  <View
+                    style={{
+                      height: px(b.baselineCents ?? 0), borderRadius: 7, borderTopLeftRadius: (b.plannedCents ?? 0) > 0 ? 3 : 7, borderTopRightRadius: (b.plannedCents ?? 0) > 0 ? 3 : 7,
+                      backgroundColor: t.primaryFill + "40", borderWidth: 1.5, borderColor: t.primaryFill, borderStyle: "dashed",
+                    }}
+                  />
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: "row", gap: 6 }}>
+        {bars.map((b, i) => (
+          <Text
+            key={b.monthKey}
+            style={{
+              flex: 1, textAlign: "center", fontSize: 11, marginLeft: i === firstForecast && i > 0 ? 6 : 0,
+              color: b.monthKey === selected ? t.text : t.textMuted, fontWeight: b.monthKey === selected ? "700" : "500",
+            }}
+          >
+            {formatMonthShort(b.monthKey).split("/")[0]}
+          </Text>
+        ))}
+      </View>
+      <View style={{ flexDirection: "row", gap: space.lg, flexWrap: "wrap" }}>
+        <Legend color={t.primaryFill} label="Realizado" />
+        <Legend color={t.primaryFill + "40"} border={t.primaryFill} label="Média 6m" />
+        <Legend color={t.planned} label="Planejado" />
+      </View>
+    </View>
+  );
+}
+
+function Legend({ color, label, border }: { color: string; label: string; border?: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: color, borderWidth: border ? 1 : 0, borderColor: border }} />
+      <Small>{label}</Small>
     </View>
   );
 }

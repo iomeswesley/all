@@ -8,7 +8,7 @@ export default function AppLayout() {
   if (state.status === "loading") return null;
   if (state.status !== "ready") return <Redirect href="/" />;
   return (
-    <Stack screenOptions={{ headerStyle: { backgroundColor: t.surface }, headerTintColor: t.text, contentStyle: { backgroundColor: t.bg } }}>
+    <Stack screenOptions={{ headerStyle: { backgroundColor: t.bg }, headerShadowVisible: false, headerTintColor: t.text, headerTitleStyle: { fontWeight: "700" }, contentStyle: { backgroundColor: t.bg } }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="fatura/[id]" options={{ title: "Conferir fatura" }} />
       <Stack.Screen name="recorrencias" options={{ title: "Recorrências" }} />
@@ -24,6 +24,8 @@ export default function AppLayout() {
       <Stack.Screen name="perguntas" options={{ title: "Pergunte aos dados" }} />
       <Stack.Screen name="cartao" options={{ title: "Monitor do cartão" }} />
       <Stack.Screen name="lancar" options={{ title: "Lançar gasto", presentation: "modal" }} />
+      <Stack.Screen name="planejado" options={{ title: "Gasto futuro", presentation: "modal" }} />
+      <Stack.Screen name="parcelas" options={{ title: "Parcelas" }} />
       <Stack.Screen name="lancamentos" options={{ title: "Pix e dinheiro" }} />
       <Stack.Screen name="regras" options={{ title: "Regras" }} />
       <Stack.Screen name="contas" options={{ title: "Contas e bancos" }} />

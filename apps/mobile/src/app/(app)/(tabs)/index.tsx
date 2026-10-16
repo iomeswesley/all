@@ -2,13 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatMonthLong, formatMonthShort, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, type Change } from "@financas/core";
+import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBrDayMonth, formatMonthLong, formatMonthShort, forecastMonths, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, upcomingPlanned, type Change } from "@financas/core";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
-import { Badge, Body, Button, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
-import { budgetsFor, defaultMonth, useAnalysis } from "@/lib/analysis";
+import { Badge, Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Money, Row, Screen, SectionTitle, Small } from "@/components/ui";
+import { budgetsFor, defaultMonth, latestStatementMonth, useAnalysis } from "@/lib/analysis";
+import { useLoad } from "@/lib/data";
+import { fetchPlanned } from "@/lib/planned";
+import { localToday } from "@/lib/today";
 import { usePrefs } from "@/lib/prefs";
 import { useReady } from "@/lib/session";
-import { space, useTheme } from "@/lib/theme";
+import { categoryColor, space, useTheme } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
 
 export default function Inicio() {
@@ -19,6 +22,15 @@ export default function Inicio() {
   const data = analysis?.txs ?? null;
   const [picked, setPicked] = useState<string | null>(null);
   const { privacy, setPrivacy } = usePrefs();
+  const planned = useLoad(fetchPlanned);
+  const today = localToday();
+
+  const ahead = useMemo(() => {
+    if (!analysis || !planned.data) return null;
+    const last = latestStatementMonth(analysis);
+    const next = last ? forecastMonths({ txs: analysis.txs, lastMonth: last, planned: planned.data, today, horizon: 1 }).months[0] ?? null : null;
+    return { next, upcoming: upcomingPlanned(planned.data, today, 45, 3) };
+  }, [analysis, planned.data, today]);
 
   const view = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -50,12 +62,16 @@ export default function Inicio() {
 
   return (
     <Screen onRefresh={reload} refreshing={loading}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <H1>{householdName}</H1>
-        <Pressable accessibilityRole="button" accessibilityLabel={privacy ? "Mostrar valores" : "Esconder valores"} hitSlop={12} onPress={() => setPrivacy(!privacy)}>
-          <Ionicons name={privacy ? "eye-off-outline" : "eye-outline"} size={26} color={t.textSecondary} />
-        </Pressable>
-      </View>
+      <Header
+        kicker={householdName}
+        title="Resumo"
+        right={
+          <>
+            <IconButton icon={privacy ? "eye-off-outline" : "eye-outline"} label={privacy ? "Mostrar valores" : "Esconder valores"} onPress={() => setPrivacy(!privacy)} />
+            <IconButton icon="add" label="Lançar gasto" filled onPress={() => router.push("/lancar")} />
+          </>
+        }
+      />
       {error ? <ErrorText message={error} /> : null}
 
       {!view ? (
@@ -66,33 +82,52 @@ export default function Inicio() {
         </Card>
       ) : (
         <>
-          <Card>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Pressable accessibilityLabel="Mês anterior" disabled={idx === 0} onPress={() => setPicked(view.months[idx - 1]!)} hitSlop={12} style={{ opacity: idx === 0 ? 0.3 : 1 }}>
-                <Ionicons name="chevron-back" size={26} color={t.text} />
-              </Pressable>
-              <View style={{ alignItems: "center" }}>
-                <Small>Fatura de</Small>
-                <Body style={{ fontWeight: "700", fontSize: 17 }}>{formatMonthLong(view.month)}</Body>
+          <Hero
+            label="Total gasto"
+            value={formatBRL(view.total)}
+            top={
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: space.xs }}>
+                <Pressable accessibilityLabel="Mês anterior" disabled={idx === 0} onPress={() => setPicked(view.months[idx - 1]!)} hitSlop={12} style={{ opacity: idx === 0 ? 0.3 : 1 }}>
+                  <Ionicons name="chevron-back" size={22} color={t.onPrimary} />
+                </Pressable>
+                <Text style={{ color: t.onPrimary, fontWeight: "700", fontSize: 16, textTransform: "capitalize" }}>{formatMonthLong(view.month)}</Text>
+                <Pressable accessibilityLabel="Próximo mês" disabled={idx === view.months.length - 1} onPress={() => setPicked(view.months[idx + 1]!)} hitSlop={12} style={{ opacity: idx === view.months.length - 1 ? 0.3 : 1 }}>
+                  <Ionicons name="chevron-forward" size={22} color={t.onPrimary} />
+                </Pressable>
               </View>
-              <Pressable accessibilityLabel="Próximo mês" disabled={idx === view.months.length - 1} onPress={() => setPicked(view.months[idx + 1]!)} hitSlop={12} style={{ opacity: idx === view.months.length - 1 ? 0.3 : 1 }}>
-                <Ionicons name="chevron-forward" size={26} color={t.text} />
-              </Pressable>
+            }
+          >
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm }}>
+              {delta !== null ? (
+                <HeroPill>{delta === 0 ? "= mês anterior" : `${delta > 0 ? "▲" : "▼"} ${view.prevTotal > 0 ? Math.round((Math.abs(delta) / view.prevTotal) * 100) : 0}% vs ${formatMonthShort(view.prev)}`}</HeroPill>
+              ) : null}
+              {ahead?.next ? <HeroPill>{`${formatMonthShort(ahead.next.monthKey)} previsto ${formatBRL(ahead.next.totalCents)}`}</HeroPill> : null}
             </View>
-            <Text style={{ color: t.text, fontSize: 34, fontWeight: "800", fontVariant: ["tabular-nums"] }}>{formatBRL(view.total)}</Text>
-            {delta !== null ? (
-              <Body muted>
-                {delta === 0 ? "Igual ao mês anterior" : `${delta > 0 ? "▲" : "▼"} ${formatBRL(Math.abs(delta))} (${view.prevTotal > 0 ? Math.round((Math.abs(delta) / view.prevTotal) * 100) : 0}%) ${delta > 0 ? "a mais" : "a menos"} que ${formatMonthShort(view.prev)}`}
-              </Body>
-            ) : null}
-          </Card>
-
-          <Button title="＋ Lançar gasto (Pix, dinheiro…)" variant="secondary" onPress={() => router.push("/lancar")} />
+          </Hero>
 
           {view.reviewCount > 0 ? (
+            <Card style={{ paddingVertical: 4 }}>
+              <Row last onPress={() => router.push("/revisar")}>
+                <Ionicons name="sparkles-outline" size={20} color={t.warning} />
+                <Body style={{ flex: 1, fontWeight: "600" }}>{view.reviewCount} para revisar</Body>
+                <Ionicons name="chevron-forward" size={18} color={t.textMuted} />
+              </Row>
+            </Card>
+          ) : null}
+
+          {ahead && ahead.upcoming.length > 0 ? (
             <Card>
-              <Body>{view.reviewCount} lançamentos deste mês sem categoria certa.</Body>
-              <Button title="Revisar agora" small variant="secondary" onPress={() => router.push("/revisar")} />
+              <SectionTitle right={<Button title="Planejar" small variant="ghost" onPress={() => router.push("/planejar")} />}>Próximos gastos</SectionTitle>
+              {ahead.upcoming.map((o) => (
+                <View key={`${o.id}-${o.date}`} style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+                  <View style={{ width: 44, paddingVertical: 4, borderRadius: 10, backgroundColor: t.surfaceAlt, alignItems: "center" }}>
+                    <Text style={{ color: t.text, fontWeight: "700", fontSize: 13, fontVariant: ["tabular-nums"] }}>{formatBrDayMonth(o.date)}</Text>
+                  </View>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: o.categoryId ? categoryColor(t, o.categoryId) : t.planned }} />
+                  <Body numberOfLines={1} style={{ flex: 1 }}>{o.description}</Body>
+                  <Money cents={o.amountCents} bold />
+                </View>
+              ))}
             </Card>
           ) : null}
 
@@ -115,7 +150,7 @@ export default function Inicio() {
           </Card>
 
           <Card>
-            <SectionTitle>Últimos 12 meses</SectionTitle>
+            <SectionTitle right={<Button title="Previsão" small variant="ghost" onPress={() => router.push("/planejar")} />}>Últimos 12 meses</SectionTitle>
             <MonthlyStackedBars series={view.series} selectedMonth={view.month} onSelect={setPicked} />
           </Card>
 
@@ -125,8 +160,8 @@ export default function Inicio() {
           </Card>
 
           <Card>
-            <SectionTitle>Top 10 estabelecimentos</SectionTitle>
-            <HBars items={view.top.map((m) => ({ key: m.key, label: m.label, cents: m.totalCents, note: m.count > 1 ? `${m.count} compras` : undefined }))} />
+            <SectionTitle>Onde mais gastou</SectionTitle>
+            <HBars items={view.top.slice(0, 5).map((m) => ({ key: m.key, label: m.label, cents: m.totalCents, note: m.count > 1 ? `${m.count} compras` : undefined }))} />
           </Card>
 
           <Card>
@@ -138,7 +173,6 @@ export default function Inicio() {
                 { key: "shared", label: "Nosso", cents: view.split.sharedCents, color: t.series[2]! },
               ]}
             />
-            <Small>Lançamentos sem dono contam como “nosso”. Defina o dono do cartão em Mais → Cartões.</Small>
           </Card>
         </>
       )}

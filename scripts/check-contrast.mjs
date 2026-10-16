@@ -25,6 +25,8 @@ for (const theme of ["light", "dark"]) {
     ...["text", "textSecondary", "textMuted", "primary", "danger", "warning", "success"].flatMap((fg) => ["bg", "surface"].map((bg) => [fg, bg])),
     ["onPrimary", "primaryFill"],
     ["onPrimary", "dangerFill"],
+    // cartão de destaque (degradê): texto branco e texto secundário nas duas pontas
+    ...["onPrimary", "onHeroMuted"].flatMap((fg) => ["heroFrom", "heroTo"].map((bg) => [fg, bg])),
   ];
   for (const [fg, bg] of pairs) {
     const r = ratio(t[fg], t[bg]);

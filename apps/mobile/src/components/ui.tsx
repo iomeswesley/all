@@ -1,4 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,19 +32,122 @@ export function Screen({ children, onRefresh, refreshing = false, scroll = true,
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const t = useTheme();
-  return <View style={[{ backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: t.border, padding: space.lg, gap: space.md }, style]}>{children}</View>;
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: t.surface, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: t.border, padding: space.lg, gap: space.md,
+          shadowColor: "#000", shadowOpacity: t.dark ? 0 : 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: t.dark ? 0 : 1,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 export function H1({ children }: { children: ReactNode }) {
   const t = useTheme();
-  return <Text accessibilityRole="header" style={{ fontSize: 26, fontWeight: "700", color: t.text }}>{children}</Text>;
+  return <Text accessibilityRole="header" style={{ fontSize: 30, fontWeight: "800", letterSpacing: -0.6, color: t.text }}>{children}</Text>;
+}
+
+/** Cabeçalho de tela: título grande + ações à direita. */
+export function Header({ title, kicker, right }: { title: string; kicker?: string; right?: ReactNode }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: space.md }}>
+      <View style={{ flex: 1 }}>
+        {kicker ? <Text style={{ color: t.textMuted, fontSize: 13, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase" }}>{kicker}</Text> : null}
+        <H1>{title}</H1>
+      </View>
+      {right ? <View style={{ flexDirection: "row", gap: space.sm }}>{right}</View> : null}
+    </View>
+  );
+}
+
+/** Botão redondo só com ícone (ações do cabeçalho). */
+export function IconButton({ icon, label, onPress, filled }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void; filled?: boolean }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={6}
+      onPress={() => { void Haptics.selectionAsync(); onPress(); }}
+      style={({ pressed }) => ({
+        width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center",
+        backgroundColor: filled ? t.primaryFill : t.surface, borderWidth: filled ? 0 : StyleSheet.hairlineWidth, borderColor: t.border, opacity: pressed ? 0.75 : 1,
+      })}
+    >
+      <Ionicons name={icon} size={22} color={filled ? t.onPrimary : t.text} />
+    </Pressable>
+  );
+}
+
+/** Cartão de destaque em degradê: rótulo, valor grande e linha de apoio. */
+export function Hero({ label, value, children, top }: { label: string; value: string; children?: ReactNode; top?: ReactNode }) {
+  const t = useTheme();
+  return (
+    <LinearGradient colors={[t.heroFrom, t.heroTo]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: radius.xl, padding: space.xl, gap: space.sm }}>
+      {top}
+      <Text style={{ color: t.onHeroMuted, fontSize: 14, fontWeight: "600" }}>{label}</Text>
+      <Text adjustsFontSizeToFit numberOfLines={1} style={{ color: t.onPrimary, fontSize: 40, fontWeight: "800", letterSpacing: -1, fontVariant: ["tabular-nums"] }}>{value}</Text>
+      {children}
+    </LinearGradient>
+  );
+}
+
+/** Pílula translúcida para usar dentro do Hero. */
+export function HeroPill({ children }: { children: ReactNode }) {
+  const t = useTheme();
+  return (
+    <View style={{ alignSelf: "flex-start", backgroundColor: "rgba(255,255,255,0.14)", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 }}>
+      <Text style={{ color: t.onPrimary, fontSize: 13, fontWeight: "600", fontVariant: ["tabular-nums"] }}>{children}</Text>
+    </View>
+  );
+}
+
+/** Número pequeno com rótulo (linha de indicadores). */
+export function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | "warn" }) {
+  const t = useTheme();
+  const c = tone === "good" ? t.success : tone === "bad" ? t.danger : tone === "warn" ? t.warning : t.text;
+  return (
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={{ color: t.textMuted, fontSize: 12.5, fontWeight: "500" }}>{label}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: c, fontSize: 17, fontWeight: "700", fontVariant: ["tabular-nums"] }}>{value}</Text>
+    </View>
+  );
+}
+
+/** Controle segmentado (2–4 opções). */
+export function Segmented<T extends string>({ options, value, onChange }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: "row", backgroundColor: t.surfaceAlt, borderRadius: radius.md, padding: 3 }}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            onPress={() => { void Haptics.selectionAsync(); onChange(o.value); }}
+            style={{ flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: radius.md - 3, backgroundColor: on ? t.surface : "transparent" }}
+          >
+            <Text style={{ color: on ? t.text : t.textSecondary, fontWeight: on ? "700" : "500", fontSize: 14 }}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 }
 
 export function SectionTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
   const t = useTheme();
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-      <Text accessibilityRole="header" style={{ fontSize: 17, fontWeight: "600", color: t.text }}>{children}</Text>
+      <Text accessibilityRole="header" style={{ fontSize: 18, fontWeight: "700", letterSpacing: -0.2, color: t.text }}>{children}</Text>
       {right}
     </View>
   );
@@ -82,7 +187,7 @@ export function Button({ title, onPress, variant = "primary", loading, disabled,
         borderWidth: variant === "secondary" ? 1 : 0,
         borderColor: t.border,
         borderRadius: radius.md,
-        paddingVertical: small ? 8 : 13,
+        paddingVertical: small ? 8 : 14,
         paddingHorizontal: small ? 12 : 18,
         alignItems: "center",
         justifyContent: "center",
