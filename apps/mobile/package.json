@@ -1,7 +1,7 @@
 {
   "name": "@financas/mobile",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
     "@financas/core": "workspace:*",
@@ -25,8 +25,10 @@
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
+    "expo-widgets": "~57.0.26",
     "react": "19.2.3",
     "react-native": "0.86.3",
+    "react-native-android-widget": "^0.22.1",
     "react-native-gifted-charts": "^1.4.81",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.2",

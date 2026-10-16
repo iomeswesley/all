@@ -6,6 +6,7 @@ import { categoryColor, radius, space, useTheme } from "@/lib/theme";
 import { Body, Button, Card, Chip, ErrorText, H1, Screen, SectionTitle, Small } from "@/components/ui";
 import { addManualEntry } from "@/lib/manual";
 import { useReady } from "@/lib/session";
+import { refreshWidget } from "@/widget";
 
 const METHODS: ManualMethod[] = ["pix", "dinheiro", "debito", "boleto", "outro"];
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -40,6 +41,7 @@ export default function Lancar() {
     setBusy(true);
     try {
       const res = await addManualEntry(householdId, entry);
+      refreshWidget();
       const alerts = res.notify?.alerts ?? [];
       const lines = [res.needsReview ? "Ficou sem categoria — ela aparece em Revisar." : "Lançado.", ...alerts.map((a) => `• ${a.title}\n  ${a.body}`)];
       Alert.alert(alerts.length ? "Lançado — atenção ao orçamento" : "Lançado", lines.join("\n\n"), [

@@ -13,6 +13,7 @@ import { usePrefs } from "@/lib/prefs";
 import { useReady } from "@/lib/session";
 import { categoryColor, space, useTheme } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
+import { useWidgetSync } from "@/widget";
 
 export default function Inicio() {
   const t = useTheme();
@@ -24,6 +25,7 @@ export default function Inicio() {
   const { privacy, setPrivacy } = usePrefs();
   const planned = useLoad(fetchPlanned);
   const today = localToday();
+  useWidgetSync(analysis, planned.data);
 
   const ahead = useMemo(() => {
     if (!analysis || !planned.data) return null;

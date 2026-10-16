@@ -11,6 +11,7 @@ import { fetchSettings } from "@/lib/phase3";
 import { fetchPlanned } from "@/lib/planned";
 import { categoryColor, space, useTheme } from "@/lib/theme";
 import { localToday } from "@/lib/today";
+import { useWidgetSync } from "@/widget";
 
 /** Evolução mês a mês + previsão dos próximos 6 meses (média do histórico + gastos planejados). */
 export default function Planejar() {
@@ -21,6 +22,7 @@ export default function Planejar() {
   const settings = useLoad(fetchSettings);
   const [picked, setPicked] = useState<string | null>(null);
   const today = localToday();
+  useWidgetSync(analysis.data, planned.data);
 
   const view = useMemo(() => {
     if (!analysis.data || !planned.data) return null;

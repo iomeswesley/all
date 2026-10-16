@@ -1,6 +1,7 @@
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { supabase } from "./supabase";
+import { clearWidget } from "@/widget/bridge";
 
 /** Exporta os dados que a pessoa pode ver (JSON) e abre a folha de compartilhamento. */
 export async function exportMyData(): Promise<void> {
@@ -51,4 +52,5 @@ export async function deleteMyAccount() {
   const { error } = await supabase.functions.invoke("delete-account", { body: { confirm: "EXCLUIR" } });
   if (error) throw new Error("Não consegui excluir a conta agora. Tente de novo; nada foi perdido pela metade.");
   await supabase.auth.signOut();
+  void clearWidget();
 }

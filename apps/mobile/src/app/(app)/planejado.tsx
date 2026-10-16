@@ -8,6 +8,7 @@ import { deletePlanned, fetchPlanned, savePlanned } from "@/lib/planned";
 import { useReady } from "@/lib/session";
 import { categoryColor, radius, space, useTheme } from "@/lib/theme";
 import { localToday } from "@/lib/today";
+import { refreshWidget } from "@/widget";
 
 const REPEATS: PlannedRepeat[] = ["once", "monthly", "yearly"];
 
@@ -50,6 +51,7 @@ function Form({ initial }: { initial?: PlannedExpense }) {
     setBusy(true);
     try {
       await savePlanned(householdId, entry, id);
+      refreshWidget();
       router.back();
     } catch (e) {
       setError((e as Error).message);
