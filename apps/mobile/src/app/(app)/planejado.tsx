@@ -5,6 +5,7 @@ import { addMonthsToKey, CATEGORIES, formatBrDate, formatNumberBR, parsePlannedD
 import { Button, Card, Chip, Empty, ErrorText, Loading, Screen, Segmented, Small } from "@/components/ui";
 import { useLoad } from "@/lib/data";
 import { deletePlanned, fetchPlanned, savePlanned } from "@/lib/planned";
+import { syncPlannedReminders } from "@/lib/reminders";
 import { useReady } from "@/lib/session";
 import { categoryColor, radius, space, useTheme } from "@/lib/theme";
 import { localToday } from "@/lib/today";
@@ -50,6 +51,7 @@ function Form({ initial }: { initial?: PlannedExpense }) {
     setBusy(true);
     try {
       await savePlanned(householdId, entry, id);
+      void syncPlannedReminders();
       router.back();
     } catch (e) {
       setError((e as Error).message);
@@ -62,7 +64,7 @@ function Form({ initial }: { initial?: PlannedExpense }) {
     if (!id) return;
     Alert.alert("Excluir este gasto futuro?", repeat === "once" ? undefined : "Todas as repetições saem da previsão.", [
       { text: "Cancelar", style: "cancel" },
-      { text: "Excluir", style: "destructive", onPress: () => void deletePlanned(id).then(() => router.back(), (e: Error) => setError(e.message)) },
+      { text: "Excluir", style: "destructive", onPress: () => void deletePlanned(id).then(() => { void syncPlannedReminders(); router.back(); }, (e: Error) => setError(e.message)) },
     ]);
   }
 
