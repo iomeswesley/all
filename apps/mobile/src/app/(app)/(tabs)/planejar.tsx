@@ -48,7 +48,7 @@ export default function Planejar() {
 
   return (
     <Screen onRefresh={() => { void analysis.reload(); void planned.reload(); void settings.reload(); }} refreshing={analysis.loading}>
-      <Header kicker="Próximos 6 meses" title="Planejar" right={<IconButton icon="add" label="Adicionar gasto futuro" filled onPress={add} />} />
+      <Header kicker="Próximos 6 meses" title="Planejar" right={<><IconButton icon="calendar-outline" label="Calendário do mês" onPress={() => router.push("/calendario")} /><IconButton icon="add" label="Adicionar gasto futuro" filled onPress={add} /></>} />
       {analysis.error || planned.error ? <ErrorText message={(analysis.error ?? planned.error)!} /> : null}
 
       {!forecast ? (
