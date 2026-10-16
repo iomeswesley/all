@@ -69,6 +69,7 @@ export default function Inicio() {
         title="Resumo"
         right={
           <>
+            <IconButton icon="search" label="Buscar lançamentos" onPress={() => router.push("/busca")} />
             <IconButton icon={privacy ? "eye-off-outline" : "eye-outline"} label={privacy ? "Mostrar valores" : "Esconder valores"} onPress={() => setPrivacy(!privacy)} />
             <IconButton icon="add" label="Lançar gasto" filled onPress={() => router.push("/lancar")} />
           </>

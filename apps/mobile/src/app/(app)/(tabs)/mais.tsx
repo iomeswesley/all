@@ -11,7 +11,7 @@ import { space, useTheme } from "@/lib/theme";
 
 type Path =
   | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encargos"
-  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado";
+  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado" | "/busca";
 
 export default function Mais() {
   const t = useTheme();
@@ -46,6 +46,7 @@ export default function Mais() {
       <SectionTitle>Entender o gasto</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         {item("clipboard-outline", "Check-in do mês", "Resumo e recomendações com economia em R$/mês", "/checkin")}
+        {item("search-outline", "Lançamentos", "Buscar, filtrar e somar qualquer gasto", "/busca")}
         {item("chatbubble-ellipses-outline", "Pergunte aos dados", "“Quanto gastamos com restaurante desde julho?”", "/perguntas")}
         {item("cafe-outline", "Custo do hábito", "O que o café e a padaria custam por ano", "/habitos")}
         {item("repeat-outline", "Recorrências", "Assinaturas e cobranças mensais, custo anual", "/recorrencias")}
