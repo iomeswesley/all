@@ -1,8 +1,10 @@
 // Edge Function: avisos (orçamento 80%/100% e aviso ao par) depois de confirmar fatura ou lançar manualmente.
-// POST { statementId } | { txId }  — roda com o JWT do usuário; a RLS vale.
+// POST { statementId } | { txId } | { commentId }  — roda com o JWT do usuário; a RLS vale.
 import { createClient } from "@supabase/supabase-js";
 import { notifyManualEntry, notifyStatementConfirmed, type PushSender } from "./process.ts";
 import { notifySupabaseStore } from "./supabase-store.ts";
+import { notifyComment } from "./comment.ts";
+import { commentSupabaseStore } from "./comment-store.ts";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -31,12 +33,16 @@ Deno.serve(async (req) => {
   const { data: u, error } = await db.auth.getUser();
   if (error || !u.user) return json({ error: "unauthorized" }, 401);
 
-  let body: { statementId?: string; txId?: string };
+  let body: { statementId?: string; txId?: string; commentId?: string };
   try { body = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
   const isId = (v?: string) => !!v && /^[0-9a-f-]{36}$/i.test(v);
-  if (!isId(body.statementId) && !isId(body.txId)) return json({ error: "invalid_request" }, 400);
+  if (!isId(body.statementId) && !isId(body.txId) && !isId(body.commentId)) return json({ error: "invalid_request" }, 400);
 
   try {
+    if (isId(body.commentId)) {
+      const r = await notifyComment(commentSupabaseStore(db, u.user.id), expoSender, body.commentId!);
+      return json(r, r.status === "not_found" ? 404 : 200);
+    }
     const store = notifySupabaseStore(db, u.user.id);
     const result = isId(body.txId) ? await notifyManualEntry(store, expoSender, body.txId!) : await notifyStatementConfirmed(store, expoSender, body.statementId!);
     return json(result, result.status === "ok" ? 200 : 409);

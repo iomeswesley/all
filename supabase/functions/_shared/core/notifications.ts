@@ -8,7 +8,7 @@ export interface PushMessage {
   title: string;
   body: string;
   /** o app abre esta rota ao tocar */
-  data: { type: "budget" | "import" | "manual"; route: string; month?: string; categoryId?: number; txId?: string };
+  data: { type: "budget" | "import" | "manual" | "comment"; route: string; month?: string; categoryId?: number; txId?: string };
   /** categoria de notificação (botões de ação) registrada no app */
   categoryIdentifier?: string;
 }

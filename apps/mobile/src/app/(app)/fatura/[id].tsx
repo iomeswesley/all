@@ -5,6 +5,7 @@ import { Alert, Modal, TextInput, View } from "react-native";
 import { formatBrDate, formatMonthLong, parseBrDate, sha256Hex, statementMonthKey, tryParseBRL, type ReconcileCheck } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { TxItem } from "@/components/TxItem";
+import { useTxThreads } from "@/components/TxThread";
 import { Badge, Banner, Body, Button, Card, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { STATEMENT_COLUMNS, useLoad, type StatementRow } from "@/lib/data";
 import { applyCategory, confirmStatement, discardStatement, fetchHiddenSums, notifyConfirmed, reconcileStatement, refreshReconciliation, setPrivate, toTxFull, TX_FULL_COLUMNS, type TxFull } from "@/lib/mutations";
@@ -43,6 +44,7 @@ export default function ConferirFatura() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const threads = useTxThreads((data?.txs ?? []).map((x) => x.id));
   const live = useMemo(() => (data ? reconcileStatement(data.statement, data.txs, data.hidden) : null), [data]);
   const ownerLabel = (uid: string | null) => (uid === null ? null : uid === me.user_id ? "meu" : partner?.display_name ?? "dela(e)");
 
@@ -153,6 +155,7 @@ export default function ConferirFatura() {
                 tx={{ id: x.id, postedOn: x.posted_on, descriptionClean: x.description_clean, amountCents: x.amountCents, amountUsdCents: x.amountUsdCents, categoryId: x.category_id, installmentN: x.installmentN, installmentTotal: x.installmentTotal, needsReview: x.needs_review, ownerLabel: ownerLabel(x.owner_user_id), isPrivate: x.is_private }}
                 onPress={x.kind === "pagamento" ? undefined : () => setSheetFor(x)}
                 onMore={() => setEditing(x)}
+                thread={threads.badge({ id: x.id, description: x.description_clean, amountCents: x.amountCents, isPrivate: x.is_private })}
               />
             ))}
           </Card>
@@ -173,6 +176,7 @@ export default function ConferirFatura() {
       ) : null}
       <Button title="Descartar esta fatura" variant="ghost" onPress={discard} />
 
+      {threads.sheet}
       <CategorySheet
         visible={sheetFor !== null}
         title={sheetFor?.description_clean ?? ""}

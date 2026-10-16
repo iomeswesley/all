@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { categoryName, decodeDescription, formatBrDayMonth, merchantKey, CAT } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
+import { TxThread, type ThreadTx } from "@/components/TxThread";
 import { Body, Card, Chip, Empty, ErrorText, H1, Loading, Money, Screen, Small } from "@/components/ui";
 import { fetchAll, useLoad } from "@/lib/data";
 import { applyCategory, applyToIds, setPrivate } from "@/lib/mutations";
@@ -37,6 +38,7 @@ export default function Revisar() {
   const [sheet, setSheet] = useState<Group | null>(null);
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState<string | null>(null);
+  const [thread, setThread] = useState<ThreadTx | null>(null);
 
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
@@ -90,10 +92,12 @@ export default function Revisar() {
               <Chip key={id} label={categoryName(id)} color={categoryColor(t, id)} onPress={() => void apply(g, { categoryId: id, ownerUserId: undefined, always: true })} />
             ))}
             <Chip label="Outra…" onPress={() => setSheet(g)} />
+            {g.items.length === 1 ? <Chip label="💬 Perguntar" onPress={() => setThread({ id: g.items[0]!.id, description: g.items[0]!.description_clean, amountCents: g.totalCents })} /> : null}
           </View>
         </Card>
       ))}
 
+      <TxThread tx={thread} onClose={() => setThread(null)} />
       <CategorySheet
         visible={sheet !== null}
         title={sheet?.label ?? ""}
