@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import { Modal, Pressable, TextInput, View } from "react-native";
-import { CATEGORIES, budgetStatuses, formatMonthLong, formatNumberBR, tryParseBRL, type BudgetStatus } from "@financas/core";
+import { CATEGORIES, budgetStatuses, formatMonthLong, formatMonthShort, formatNumberBR, tryParseBRL, type BudgetStatus } from "@financas/core";
 import { Badge, Body, Button, Card, ErrorText, H1, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, defaultMonth, monthsOf, useAnalysis } from "@/lib/analysis";
+import { useLoad } from "@/lib/data";
+import { categoryForecastFor } from "@/lib/forecast-category";
+import { fetchPlanned } from "@/lib/planned";
+import { localToday } from "@/lib/today";
 import { saveBudget } from "@/lib/mutations";
 import { useReady } from "@/lib/session";
 import { categoryColor, radius, space, useTheme } from "@/lib/theme";
@@ -23,6 +27,10 @@ export default function Orcamento() {
   const [value, setValue] = useState("");
   const [fail, setFail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // previsão do próximo mês por categoria (média 6m + planejados), comparada ao limite daquele mês
+  const planned = useLoad(fetchPlanned);
+  const today = localToday();
+  const next = useMemo(() => (data && planned.data ? categoryForecastFor(data, planned.data, today) : null), [data, planned.data, today]);
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -105,6 +113,7 @@ export default function Orcamento() {
                   ) : (
                     <Small>Gasto no mês: {formatBRL(spentCents)} · toque para definir um limite</Small>
                   )}
+                  <NextForecast cmp={next} categoryId={c.id} />
                 </Card>
               </Pressable>
             );
@@ -134,4 +143,13 @@ export default function Orcamento() {
       </Modal>
     </Screen>
   );
+}
+
+/** Linha discreta: quanto a categoria deve gastar no próximo mês previsto. */
+function NextForecast({ cmp, categoryId }: { cmp: ReturnType<typeof categoryForecastFor>; categoryId: number }) {
+  const t = useTheme();
+  const r = cmp?.rows.find((x) => x.categoryId === categoryId);
+  if (!cmp || !r || r.totalCents <= 0) return null;
+  const color = r.level === "estoura" ? t.danger : r.level === "perto" ? t.warning : t.textMuted;
+  return <Small style={{ color }}>Previsto {formatMonthShort(cmp.monthKey)}: {formatBRL(r.totalCents)}{r.level === "estoura" ? " · vai estourar" : ""}</Small>;
 }
