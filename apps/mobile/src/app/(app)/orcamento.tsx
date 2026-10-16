@@ -5,6 +5,8 @@ import { Badge, Body, Button, Card, ErrorText, H1, Loading, Money, Screen, Secti
 import { budgetsFor, defaultMonth, monthsOf, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
 import { categoryForecastFor } from "@/lib/forecast-category";
+import { paceFor } from "@/lib/pace";
+import { PaceLine } from "@/components/PaceCard";
 import { fetchPlanned } from "@/lib/planned";
 import { localToday } from "@/lib/today";
 import { saveBudget } from "@/lib/mutations";
@@ -31,6 +33,7 @@ export default function Orcamento() {
   const planned = useLoad(fetchPlanned);
   const today = localToday();
   const next = useMemo(() => (data && planned.data ? categoryForecastFor(data, planned.data, today) : null), [data, planned.data, today]);
+  const pace = useMemo(() => (data ? paceFor(data, today) : null), [data, today]);
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -113,6 +116,7 @@ export default function Orcamento() {
                   ) : (
                     <Small>Gasto no mês: {formatBRL(spentCents)} · toque para definir um limite</Small>
                   )}
+                  {pace ? <PaceLine month={pace.month} row={pace.categories.find((r) => r.categoryId === c.id)} /> : null}
                   <NextForecast cmp={next} categoryId={c.id} />
                 </Card>
               </Pressable>

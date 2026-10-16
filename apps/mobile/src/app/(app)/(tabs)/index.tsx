@@ -14,6 +14,7 @@ import { useReady } from "@/lib/session";
 import { categoryColor, space, useTheme } from "@/lib/theme";
 import { formatBRL } from "@/lib/format";
 import { useWidgetSync } from "@/widget";
+import { PaceCard } from "@/components/PaceCard";
 
 export default function Inicio() {
   const t = useTheme();
@@ -106,6 +107,7 @@ export default function Inicio() {
               {ahead?.next ? <HeroPill>{`${formatMonthShort(ahead.next.monthKey)} previsto ${formatBRL(ahead.next.totalCents)}`}</HeroPill> : null}
             </View>
           </Hero>
+          {analysis ? <PaceCard analysis={analysis} today={today} /> : null}
 
           {view.reviewCount > 0 ? (
             <Card style={{ paddingVertical: 4 }}>
