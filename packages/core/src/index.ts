@@ -13,6 +13,7 @@ export * from "./sha256.ts";
 export * from "./installments.ts";
 export * from "./analytics.ts";
 export * from "./recurring.ts";
+export * from "./price-change.ts";
 export * from "./draft.ts";
 export * from "./pdf/items.ts";
 export * from "./budget.ts";

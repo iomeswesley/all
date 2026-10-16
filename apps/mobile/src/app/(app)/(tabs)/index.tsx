@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBrDayMonth, formatMonthLong, formatMonthShort, forecastMonths, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, upcomingPlanned, type Change } from "@financas/core";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
+import { PriceChangesCard } from "@/components/PriceChanges";
 import { Badge, Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Money, Row, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, defaultMonth, latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
@@ -119,6 +120,8 @@ export default function Inicio() {
               </Row>
             </Card>
           ) : null}
+
+          <PriceChangesCard txs={data} month={view.month} />
 
           {ahead && ahead.upcoming.length > 0 ? (
             <Card>

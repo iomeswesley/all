@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { View } from "react-native";
 import { categoryName, detectRecurring, formatMonthShort, type RecurringAlert } from "@financas/core";
+import { PriceChangeList } from "@/components/PriceChanges";
 import { Badge, Body, Card, Empty, ErrorText, Loading, Money, Screen, SectionTitle, Small } from "@/components/ui";
 import { latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { space } from "@/lib/theme";
@@ -35,6 +36,8 @@ export default function Recorrencias() {
             <Money cents={report.monthlyTotalCents} bold style={{ fontSize: 28 }} />
             <Body muted>por mês · {formatBRL(report.annualTotalCents)} por ano</Body>
           </Card>
+
+          <PriceChangeList txs={data} month={report.latest} />
 
           {report.newSubscriptions.length > 0 ? (
             <Card>
