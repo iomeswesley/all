@@ -32,3 +32,4 @@ export * from "./manual.ts";
 export * from "./parsers/ofx.ts";
 export * from "./parsers/json-import.ts";
 export * from "./parsers/index.ts";
+export * from "./widget.ts";
