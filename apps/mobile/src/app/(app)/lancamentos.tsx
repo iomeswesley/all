@@ -3,6 +3,7 @@ import { Alert, View } from "react-native";
 import { formatMonthLong } from "@financas/core";
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { TxItem } from "@/components/TxItem";
+import { useTxThreads } from "@/components/TxThread";
 import { Body, Button, Card, Empty, ErrorText, H1, Loading, Money, Screen, SectionTitle } from "@/components/ui";
 import { useLoad, type TxRow } from "@/lib/data";
 import { deleteManualEntry, fetchManualEntries } from "@/lib/manual";
@@ -16,6 +17,7 @@ export default function Lancamentos() {
   const { data, error, loading, reload } = useLoad(fetchManualEntries);
   const [sheetFor, setSheetFor] = useState<TxRow | null>(null);
   const [fail, setFail] = useState<string | null>(null);
+  const threads = useTxThreads((data ?? []).map((x) => x.id));
 
   const ownerLabel = (uid: string | null) => (uid === null ? null : uid === me.user_id ? "meu" : partner?.display_name ?? "par");
   const run = async (fn: () => Promise<void>) => {
@@ -50,12 +52,14 @@ export default function Lancamentos() {
               key={x.id}
               tx={{ id: x.id, postedOn: x.postedOn, descriptionClean: x.descriptionClean, amountCents: x.amountCents, amountUsdCents: null, categoryId: x.categoryId, installmentN: null, installmentTotal: null, needsReview: x.needsReview, ownerLabel: ownerLabel(x.ownerUserId), isPrivate: x.isPrivate }}
               onPress={() => setSheetFor(x)}
+              thread={threads.badge({ id: x.id, description: x.descriptionClean, amountCents: x.amountCents, isPrivate: x.isPrivate })}
               onMore={() => Alert.alert(x.descriptionClean, "O que fazer com este lançamento?", [{ text: "Cancelar", style: "cancel" }, { text: "Excluir", style: "destructive", onPress: () => void run(() => deleteManualEntry(x.id)) }])}
             />
           ))}
         </Card>
       ))}
       <Body muted style={{ fontSize: 13 }}>Toque para mudar a categoria; “⋯” para excluir.</Body>
+      {threads.sheet}
       <CategorySheet visible={sheetFor !== null} title={sheetFor?.descriptionClean ?? ""} allowPrivate onClose={() => setSheetFor(null)} onChoose={(c) => sheetFor && void choose(sheetFor)(c)} />
     </Screen>
   );

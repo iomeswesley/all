@@ -5,6 +5,7 @@ import { categoryName, decodeDescription, formatBrDayMonth, merchantHistory, mer
 import { CategorySheet, type CategoryChoice } from "@/components/CategorySheet";
 import { SwipeReview, type ReviewCard } from "@/components/SwipeReview";
 import { Body, Card, Chip, Empty, ErrorText, H1, Loading, Money, Screen, Segmented, Small } from "@/components/ui";
+import { TxThread, type ThreadTx } from "@/components/TxThread";
 import { fetchAll, useLoad } from "@/lib/data";
 import { applyCategory, applyToIds, setPrivate } from "@/lib/mutations";
 import { fetchRules } from "@/lib/rules";
@@ -62,6 +63,7 @@ export default function Revisar() {
     await reload();
     setDeckId((n) => n + 1);
   }
+  const [thread, setThread] = useState<ThreadTx | null>(null);
 
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
@@ -135,10 +137,12 @@ export default function Revisar() {
               <Chip key={id} label={categoryName(id)} color={categoryColor(t, id)} onPress={() => void apply(g, { categoryId: id, ownerUserId: undefined, always: true })} />
             ))}
             <Chip label="Outra…" onPress={() => setSheet(g)} />
+            {g.items.length === 1 ? <Chip label="💬 Perguntar" onPress={() => setThread({ id: g.items[0]!.id, description: g.items[0]!.description_clean, amountCents: g.totalCents })} /> : null}
           </View>
         </Card>
       ))}
 
+      <TxThread tx={thread} onClose={() => setThread(null)} />
       <CategorySheet
         visible={sheet !== null}
         title={sheet?.label ?? ""}

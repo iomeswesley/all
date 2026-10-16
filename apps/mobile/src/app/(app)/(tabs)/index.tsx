@@ -6,6 +6,7 @@ import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBrDa
 import { AllowanceCard } from "@/components/AllowanceCard";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { PriceChangesCard } from "@/components/PriceChanges";
+import { CommentsInbox } from "@/components/CommentsInbox";
 import { Badge, Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Money, Row, Screen, SectionTitle, Small } from "@/components/ui";
 import { budgetsFor, defaultMonth, latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
@@ -79,6 +80,7 @@ export default function Inicio() {
         }
       />
       {error ? <ErrorText message={error} /> : null}
+      <CommentsInbox />
 
       {!view ? (
         <Card>

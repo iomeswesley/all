@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { categoryName, formatBrDayMonth } from "@financas/core";
 import { categoryColor, space, useTheme } from "@/lib/theme";
@@ -18,7 +19,14 @@ export interface TxItemData {
   isPrivate?: boolean;
 }
 
-export function TxItem({ tx, onPress, onMore }: { tx: TxItemData; onPress?: () => void; onMore?: () => void }) {
+/** Conversa do lançamento (comentários/reações): contador 💬 e o toque que abre a folha. */
+export interface TxThreadBadge {
+  comments: number;
+  reactions: string[];
+  onOpen: () => void;
+}
+
+export function TxItem({ tx, onPress, onMore, thread }: { tx: TxItemData; onPress?: () => void; onMore?: () => void; thread?: TxThreadBadge }) {
   const t = useTheme();
   const parts = [
     categoryName(tx.categoryId),
@@ -41,6 +49,18 @@ export function TxItem({ tx, onPress, onMore }: { tx: TxItemData; onPress?: () =
         </View>
         <Money cents={tx.amountCents} color={tx.amountCents < 0 ? t.success : undefined} />
       </Pressable>
+      {thread ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={thread.comments > 0 ? `Conversa, ${thread.comments} comentário${thread.comments > 1 ? "s" : ""}` : "Abrir conversa"}
+          onPress={thread.onOpen}
+          hitSlop={8}
+          style={{ flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 4, paddingVertical: 10 }}
+        >
+          {thread.reactions.slice(0, 2).map((e) => <Text key={e} style={{ fontSize: 13 }}>{e}</Text>)}
+          {thread.comments > 0 ? <Text style={{ color: t.primary, fontSize: 13, fontWeight: "600" }}>💬 {thread.comments}</Text> : thread.reactions.length === 0 ? <Ionicons name="chatbubble-outline" size={17} color={t.textMuted} /> : null}
+        </Pressable>
+      ) : null}
       {onMore ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Mais opções do lançamento" onPress={onMore} hitSlop={8} style={{ paddingHorizontal: 6, paddingVertical: 10 }}>
           <Text style={{ color: t.textMuted, fontSize: 20 }}>⋯</Text>
