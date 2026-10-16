@@ -9,6 +9,7 @@ import { syncPlannedReminders } from "@/lib/reminders";
 import { useReady } from "@/lib/session";
 import { categoryColor, radius, space, useTheme } from "@/lib/theme";
 import { localToday } from "@/lib/today";
+import { refreshWidget } from "@/widget";
 
 const REPEATS: PlannedRepeat[] = ["once", "monthly", "yearly"];
 
@@ -52,6 +53,7 @@ function Form({ initial }: { initial?: PlannedExpense }) {
     try {
       await savePlanned(householdId, entry, id);
       void syncPlannedReminders();
+      refreshWidget();
       router.back();
     } catch (e) {
       setError((e as Error).message);
@@ -64,7 +66,7 @@ function Form({ initial }: { initial?: PlannedExpense }) {
     if (!id) return;
     Alert.alert("Excluir este gasto futuro?", repeat === "once" ? undefined : "Todas as repetições saem da previsão.", [
       { text: "Cancelar", style: "cancel" },
-      { text: "Excluir", style: "destructive", onPress: () => void deletePlanned(id).then(() => { void syncPlannedReminders(); router.back(); }, (e: Error) => setError(e.message)) },
+      { text: "Excluir", style: "destructive", onPress: () => void deletePlanned(id).then(() => { void syncPlannedReminders(); refreshWidget(); router.back(); }, (e: Error) => setError(e.message)) },
     ]);
   }
 

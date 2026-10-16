@@ -1,6 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase, supabaseConfigured } from "./supabase";
+import { clearWidget } from "@/widget/bridge";
 
 export interface Member {
   user_id: string;
@@ -72,6 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    void clearWidget();
     setState({ status: "signed_out" });
   }, []);
 

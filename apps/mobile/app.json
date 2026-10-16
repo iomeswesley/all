@@ -48,6 +48,41 @@
             "backgroundColor": "#121211"
           }
         }
+      ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "br.com.financascasal.app.ExpoWidgetsTarget",
+          "groupIdentifier": "group.br.com.financascasal.app",
+          "widgets": [
+            {
+              "name": "PrevistoWidget",
+              "displayName": "Previsto do mês",
+              "description": "Previsto do mês, próximo gasto futuro e atalho para lançar.",
+              "ios": {
+                "supportedFamilies": ["systemSmall", "systemMedium"]
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "PrevistoWidget",
+              "label": "Previsto do mês",
+              "description": "Previsto do mês, próximo gasto futuro e atalho para lançar.",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            }
+          ]
+        }
       ]
     ],
     "description": "Controle financeiro do casal: importa a fatura do cartão em PDF, confere os totais e mostra para onde o dinheiro vai.",
