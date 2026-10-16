@@ -24,6 +24,7 @@ export * from "./tax.ts";
 export * from "./goals.ts";
 export * from "./cashflow.ts";
 export * from "./planned.ts";
+export * from "./calendar.ts";
 export * from "./forecast.ts";
 export * from "./query.ts";
 export * from "./cardmonitor.ts";
