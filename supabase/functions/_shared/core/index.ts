@@ -27,6 +27,7 @@ export * from "./cashflow.ts";
 export * from "./planned.ts";
 export * from "./calendar.ts";
 export * from "./forecast.ts";
+export * from "./forecast-category.ts";
 export * from "./query.ts";
 export * from "./cardmonitor.ts";
 export * from "./manual.ts";
