@@ -30,6 +30,7 @@ export default function AppLayout() {
       <Stack.Screen name="calendario" options={{ title: "Calendário" }} />
       <Stack.Screen name="parcelas" options={{ title: "Parcelas" }} />
       <Stack.Screen name="lancamentos" options={{ title: "Pix e dinheiro" }} />
+      <Stack.Screen name="busca" options={{ title: "Lançamentos" }} />
       <Stack.Screen name="regras" options={{ title: "Regras" }} />
       <Stack.Screen name="contas" options={{ title: "Contas e bancos" }} />
       <Stack.Screen name="importar-json" options={{ title: "Importação assistida" }} />
