@@ -36,3 +36,4 @@ export * from "./parsers/json-import.ts";
 export * from "./parsers/index.ts";
 export * from "./planned-match.ts";
 export * from "./widget.ts";
+export * from "./split.ts";
