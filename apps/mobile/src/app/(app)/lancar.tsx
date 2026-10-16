@@ -4,6 +4,7 @@ import { Alert, Switch, TextInput, View } from "react-native";
 import { CATEGORIES, METHOD_LABEL, parseEntryDate, tryParseBRL, validateManualEntry, type ManualMethod } from "@financas/core";
 import { categoryColor, radius, space, useTheme } from "@/lib/theme";
 import { Body, Button, Card, Chip, ErrorText, H1, Screen, SectionTitle, Small } from "@/components/ui";
+import { AllowanceHint } from "@/components/AllowanceCard";
 import { addManualEntry } from "@/lib/manual";
 import { useReady } from "@/lib/session";
 import { refreshWidget } from "@/widget";
@@ -98,6 +99,7 @@ export default function Lancar() {
             <Switch value={isPrivate} onValueChange={setIsPrivate} accessibilityLabel="Gasto pessoal" />
           </View>
         ) : null}
+        {owner === me.user_id && isPrivate && partner ? <AllowanceHint cents={tryParseBRL(amount) ?? 0} date={parseEntryDate(dateText, todayIso())} /> : null}
       </Card>
 
       {error ? <ErrorText message={error} /> : null}

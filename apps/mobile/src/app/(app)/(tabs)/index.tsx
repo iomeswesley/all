@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { addMonthsToKey, budgetStatuses, categoryName, compareMonths, formatBrDayMonth, formatMonthLong, formatMonthShort, forecastMonths, monthlySeries, splitByOwner, topMerchants, totalByCategory, totalSpent, upcomingPlanned, type Change } from "@financas/core";
+import { AllowanceCard } from "@/components/AllowanceCard";
 import { CategoryDonut, HBars, MonthlyStackedBars, SplitBar } from "@/components/charts";
 import { PriceChangesCard } from "@/components/PriceChanges";
 import { Badge, Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Money, Row, Screen, SectionTitle, Small } from "@/components/ui";
@@ -138,6 +139,8 @@ export default function Inicio() {
               ))}
             </Card>
           ) : null}
+
+          <AllowanceCard />
 
           {view.budgets.some((b) => b.level !== "ok") ? (
             <Card>
