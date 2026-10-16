@@ -11,7 +11,7 @@ import { space, useTheme } from "@/lib/theme";
 
 type Path =
   | "/recorrencias" | "/cartoes" | "/meu-casal" | "/orcamento" | "/checkin" | "/encargos"
-  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado";
+  | "/habitos" | "/ir" | "/fluxo" | "/metas" | "/perguntas" | "/cartao" | "/lancar" | "/lancamentos" | "/regras" | "/contas" | "/seus-dados" | "/parcelas" | "/planejado" | "/mesada";
 
 export default function Mais() {
   const t = useTheme();
@@ -56,6 +56,7 @@ export default function Mais() {
       <Card style={{ paddingVertical: 4 }}>
         {item("calendar-outline", "Gasto futuro", "IPVA, viagem, matrícula — entra na previsão", "/planejado")}
         {item("layers-outline", "Parcelas", "O que já está comprometido nos próximos meses", "/parcelas")}
+        {item("lock-closed-outline", "Dinheiro livre", "Mesada pessoal 🔒 de cada um; o par vê só a %", "/mesada")}
         {item("speedometer-outline", "Orçamento", "Limite por categoria; aviso em 80% e 100%", "/orcamento")}
         {item("trending-up-outline", "Fluxo de caixa", "Quanto sobra nos próximos 6 meses", "/fluxo")}
         {item("flag-outline", "Metas", "Quanto guardar por mês para chegar lá", "/metas")}

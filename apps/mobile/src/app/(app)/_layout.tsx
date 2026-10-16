@@ -34,6 +34,7 @@ export default function AppLayout() {
       <Stack.Screen name="contas" options={{ title: "Contas e bancos" }} />
       <Stack.Screen name="importar-json" options={{ title: "Importação assistida" }} />
       <Stack.Screen name="seus-dados" options={{ title: "Seus dados" }} />
+      <Stack.Screen name="mesada" options={{ title: "Dinheiro livre" }} />
     </Stack>
   );
 }
