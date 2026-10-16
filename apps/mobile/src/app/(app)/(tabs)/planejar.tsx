@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 import { categoryName, formatBrDate, formatMonthLong, formatMonthShort, forecastMonths, plannedEnded, repeatSummary, type PlannedExpense } from "@financas/core";
 import { TimelineBars, type TimelineBar } from "@/components/charts";
 import { ForecastByCategory } from "@/components/ForecastByCategory";
+import { PlannedMatchCard } from "@/components/PlannedMatchCard";
 import { Body, Button, Card, Empty, ErrorText, Header, Hero, HeroPill, IconButton, Loading, Row, Screen, SectionTitle, Small, Stat } from "@/components/ui";
 import { latestStatementMonth, useAnalysis } from "@/lib/analysis";
 import { useLoad } from "@/lib/data";
@@ -104,6 +105,8 @@ export default function Planejar() {
           </Card>
         </>
       )}
+
+      {analysis.data && planned.data ? <PlannedMatchCard planned={planned.data} txs={analysis.data.txs} today={today} /> : null}
 
       <SectionTitle right={active.length > 0 ? <Button title="Adicionar" small variant="ghost" onPress={add} /> : undefined}>Gastos futuros</SectionTitle>
       {active.length === 0 ? (
