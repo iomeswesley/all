@@ -9,6 +9,7 @@ App mobile (Expo/React Native) de controle financeiro para um casal, em pt-BR. I
 - Fase 3 (diferenciais): [docs/FASE3.md](docs/FASE3.md)
 - Complementos (regras, Pix/dinheiro, notificação com botões, acabamento): [docs/COMPLEMENTOS.md](docs/COMPLEMENTOS.md)
 - Contas, outros bancos (OFX/JSON), seus dados (LGPD) e IR: [docs/CONTAS-E-DADOS.md](docs/CONTAS-E-DADOS.md)
+- Benchmark, gastos futuros, previsão de 6 meses e novo visual: [docs/BENCHMARK-E-PLANO.md](docs/BENCHMARK-E-PLANO.md)
 
 ```
 apps/mobile/            app Expo (Expo Router, roda no Expo Go)
