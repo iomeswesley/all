@@ -67,3 +67,22 @@ Nenhuma Edge Function mudou (o core copiado foi sincronizado só por consistênc
 - Honeydue/Zeta: [TechCrunch](https://techcrunch.com/2017/08/07/honeydue-is-a-money-management-app-for-couples/), [NerdWallet (sindicado)](https://www.abc4.com/news/business/nerdwallet/3-budget-apps-for-couples-who-want-to-align-on-money/amp/)
 - Mobills / Organizze: [App Store Mobills](https://apps.apple.com/BR/app/id921838244), [App Store Organizze](https://apps.apple.com/BR/app/id677699286), [Tecnoblog comunidade](https://tecnoblog.net/comunidade/t/melhor-app-de-gestao-financeira/46180)
 - X: [Nath Finanças](https://x.com/nathfinancas/status/1411033237145755655), [Visor](https://x.com/joaosenzi/status/2027872711628800034), [Finma/MacMagazine](https://x.com/MacMagazine/status/1894137293549555842), [Monarch/WSJ](https://x.com/monarch_money/status/1742762398354755780), [Copilot](https://x.com/copilotmoney)
+
+## Atualização — ondas 1 e 2 da pesquisa aprofundada
+Relatório completo: [pesquisa/reports/Benchmark apps finanças casal.md](pesquisa/reports/Benchmark%20apps%20finan%C3%A7as%20casal.md).
+
+| Recurso | Doc |
+|---|---|
+| Revisão por swipe, ritmo de gasto, alerta de valor em assinaturas, busca com totais ao vivo | (no código: `review-suggest.ts`, `pace.ts`, `price-change.ts`, `search.ts`) |
+| Divisão do nosso e acerto de contas | [ACERTO-CASAL.md](ACERTO-CASAL.md) |
+| Comentários e reações | [COMENTARIOS.md](COMENTARIOS.md) |
+| Mesada pessoal 🔒 | [MESADA.md](MESADA.md) |
+| Encontro do dinheiro | [ENCONTRO-DINHEIRO.md](ENCONTRO-DINHEIRO.md) |
+| Calendário, previsão por categoria, "Já aconteceu?", lembretes, widget | [CALENDARIO.md](CALENDARIO.md), [PREVISAO-CATEGORIA.md](PREVISAO-CATEGORIA.md), [BAIXA-PLANEJADOS.md](BAIXA-PLANEJADOS.md), [LEMBRETES.md](LEMBRETES.md), [WIDGET.md](WIDGET.md) |
+
+### Publicar tudo
+```bash
+npx supabase db push                          # migrations 20261016…–20261018000005
+node scripts/sync-core-to-functions.mjs
+npx supabase functions deploy notify          # agora também avisa comentários
+```
