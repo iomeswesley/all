@@ -25,6 +25,7 @@ export default function AppLayout() {
       <Stack.Screen name="cartao" options={{ title: "Monitor do cartão" }} />
       <Stack.Screen name="lancar" options={{ title: "Lançar gasto", presentation: "modal" }} />
       <Stack.Screen name="planejado" options={{ title: "Gasto futuro", presentation: "modal" }} />
+      <Stack.Screen name="calendario" options={{ title: "Calendário" }} />
       <Stack.Screen name="parcelas" options={{ title: "Parcelas" }} />
       <Stack.Screen name="lancamentos" options={{ title: "Pix e dinheiro" }} />
       <Stack.Screen name="regras" options={{ title: "Regras" }} />
